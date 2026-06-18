@@ -215,8 +215,8 @@ public class MacForm : Form
         Controls.Add(mainLayout);
 
         // ---- 事件绑定 ----
-        btnRec.Click += (s, e) => { mainForm.ToggleRecording(); UpdateButtons(); };
-        btnStopRec.Click += (s, e) => { mainForm.ToggleRecording(); UpdateButtons(); };
+        btnRec.Click += (s, e) => { mainForm.ToglRecord(); UpdateButtons(); };
+        btnStopRec.Click += (s, e) => { mainForm.ToglRecord(); UpdateButtons(); };
         btnPlay.Click += (s, e) => { mainForm.TogglePlay(); UpdateButtons(); };
         btnStopPlay.Click += (s, e) => { mainForm.TogglePlay(); UpdateButtons(); };
         btnConv.Click += (s, e) => ConvMac();
@@ -382,7 +382,7 @@ public class MacForm : Form
             return;
         int newRec = (int)(Keys)cboRecHot.SelectedItem;
         int newPlay = (int)(Keys)cboPlayHot.SelectedItem;
-        mainForm.UpdateMacroHotKeys(newRec, newPlay);
+        mainForm.UpMacKeys(newRec, newPlay);
     }
 
     private void OnPlayHotChanged(object? sender, EventArgs e)
@@ -391,7 +391,7 @@ public class MacForm : Form
             return;
         int newRec = (int)(Keys)cboRecHot.SelectedItem;
         int newPlay = (int)(Keys)cboPlayHot.SelectedItem;
-        mainForm.UpdateMacroHotKeys(newRec, newPlay);
+        mainForm.UpMacKeys(newRec, newPlay);
     }
 
     // ---- 主窗口状态变化 ----

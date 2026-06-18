@@ -14,7 +14,7 @@ internal class Config
     [JsonProperty("循环次数", Order = 1)] public int PosLoopCount { get; set; } = -1;
     [JsonProperty("启动热键", Order = 2)] public int ClickHotKey { get; set; } = (int)Keys.F9;
     [JsonProperty("同时执行", Order = 3)] public bool SimulExec { get; set; } = false;
-    [JsonProperty("记录热键", Order = 4)] public int HotKeyAltL { get; set; } = (int)Keys.A;
+    [JsonProperty("记录热键", Order = 4)] public int HotKeyAltL { get; set; } = (int)Keys.S;
     [JsonProperty("位置列表", Order = 5)] public List<PosData> PosList { get; set; } = new();
 
     [JsonProperty("定时启用", Order = 6)] public bool TimerEnabled { get; set; } = false;
@@ -23,6 +23,7 @@ internal class Config
 
     [JsonProperty("宏录制热键", Order = 10)] public int MacRecHotKey { get; set; } = (int)Keys.F6;
     [JsonProperty("宏播放热键", Order = 11)] public int MacPlayHotKey { get; set; } = (int)Keys.F7;
+    [JsonProperty("截图热键", Order = 12)] public int SnapHotKey { get; set; } = (int)Keys.A;   // 新增
 
     /// <summary> 单个位置/操作数据 </summary>
     public class PosData
@@ -34,10 +35,12 @@ internal class Config
         [JsonProperty("操作键")] public int ActKey { get; set; } = 0;
         [JsonProperty("修饰键")] public int ModKey { get; set; } = 0;
         [JsonProperty("操作模式")] public int OpMode { get; set; } = 0;    // 0单击 1按下 2弹起
-        [JsonProperty("等待毫秒")] public int WaitMs { get; set; } = 0;    // 前置延迟（仅顺序执行有效）
+        [JsonProperty("等待毫秒")] public int WaitMs { get; set; } = 0;
+        [JsonProperty("使用图像匹配")] public bool UseImageMatch { get; set; } = false;
+        [JsonProperty("图像模板")] public byte[]? ImageTemplate { get; set; }
+        [JsonProperty("匹配阈值")] public float Threshold { get; set; } = 0.8f;
     }
 
-    // ---- 文件读写 ----
     public static readonly string Path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config.json");
     public static readonly string ScriptDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backup");
 

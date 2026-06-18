@@ -10,38 +10,69 @@ namespace ClickHelper.Macro;
 public class MacPlay
 {
     private CancellationTokenSource cts;
-    private bool playing;
 
-    public bool IsPlay => playing;
+    /// <summary> 是否正在播放 </summary>
+    public bool Playing { get; private set; }
 
-    public void Play(MacData data, double speed = 1.0, Action? done = null)
+    /// <param name="data">宏数据</param>
+    /// <param name="loopCount">循环次数：-1无限，0不播放，>0指定次数</param>
+    /// <param name="speed">播放速度倍率</param>
+    /// <param name="done">播放结束回调（含取消或正常结束）</param>
+    public void Play(MacData data, int loopCount = 1, double speed = 1.0, Action? done = null)
     {
-        if (playing) return;
+        if (Playing) return;
+        if (loopCount == 0)
+        {
+            done?.Invoke();
+            return;
+        }
         cts = new CancellationTokenSource();
         var tok = cts.Token;
-        playing = true;
+        Playing = true;
 
         Task.Run(() =>
         {
             try
             {
-                var sw = Stopwatch.StartNew();
-                int idx = 0;
-                while (idx < data.Items.Count && !tok.IsCancellationRequested)
+                int totalCount = 0;
+                while (true)
                 {
-                    var it = data.Items[idx];
-                    int target = (int)(it.Time / speed);
-                    int delay = target - (int)sw.ElapsedMilliseconds;
-                    if (delay > 0) Task.Delay(delay, tok).Wait(tok);
-                    if (tok.IsCancellationRequested) break;
-                    Exec(it);
-                    idx++;
+                    if (loopCount > 0 && totalCount >= loopCount)
+                        break;
+                    if (tok.IsCancellationRequested)
+                        break;
+
+                    var sw = Stopwatch.StartNew();
+                    int idx = 0;
+                    while (idx < data.Items.Count && !tok.IsCancellationRequested)
+                    {
+                        var it = data.Items[idx];
+                        int target = (int)(it.Time / speed);
+                        int delay = target - (int)sw.ElapsedMilliseconds;
+                        if (delay > 0)
+                            Task.Delay(delay, tok).Wait(tok);
+                        if (tok.IsCancellationRequested)
+                            break;
+                        Exec(it);
+                        idx++;
+                    }
+                    totalCount++;
+
+                    if (loopCount == -1)
+                        continue;
                 }
-                playing = false;
+                Playing = false;
                 done?.Invoke();
             }
-            catch (OperationCanceledException) { playing = false; }
-            catch { playing = false; throw; }
+            catch (OperationCanceledException)
+            {
+                Playing = false;
+            }
+            catch
+            {
+                Playing = false;
+                throw;
+            }
         }, tok);
     }
 

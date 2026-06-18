@@ -16,7 +16,7 @@ public class Main : Form
     private NumericUpDown numLoop;
     private CheckBox chkSim, chkAutoMin;
     private Button btnSave, btnLoad;
-    private ComboBox cboHot, cboHotAlt;
+    private ComboBox cboHot, cboHotAlt, cboSnap;   // 新增截图下拉
     private Button btnTimer;
     private StatusStrip stBar;
     private ToolStripStatusLabel stStat, stCoord;
@@ -37,8 +37,12 @@ public class Main : Form
     public bool IsPlaying = false;
     private int macroRecHotId = 200;
     private int macroPlayHotId = 201;
+    private int snapHotId = 202;   // 截图热键ID
 
-    // ---- 状态变化事件（供 MacForm 订阅） ----
+    // ---- 截图互斥标志 ----
+    private bool isSnapping;
+
+    // ---- 状态变化事件 ----
     public event Action<string>? StatusChanged;
 
     public Main()
@@ -60,7 +64,6 @@ public class Main : Form
 
         this.Icon = LoadIcon("ClickHelper.Icon.YX.ico");
 
-        // ========== 修改点：添加 Application.Exit() ==========
         this.FormClosing += (s, e) =>
         {
             hk.Unregister();
@@ -72,17 +75,14 @@ public class Main : Form
             tray.Dispose();
             Application.Exit();   // 确保进程完全退出
         };
-        // =================================================
 
         this.Load += (s, e) =>
         {
-            // 如果用户选择“不再显示”，则跳过关于对话框
             if (!cfg.SkipAbout)
             {
                 using var about = new AboutForm(cfg);
                 about.ShowDialog();
             }
-
             this.CenterToScreen();
         };
 
@@ -91,7 +91,6 @@ public class Main : Form
             if (this.WindowState == FormWindowState.Minimized)
             {
                 this.Hide();
-                // 托盘常驻，不再切换可见性
             }
         };
 
@@ -99,14 +98,15 @@ public class Main : Form
         tCheck.Tick += TTick;
         if (cfg.TimerEnabled) tCheck.Start();
 
-        RegisterMacroHotKeys();
+        RegMacKeys();
+        RegSnapKey();
     }
 
     private void InitUI()
     {
         this.Text = $"点击助手 {Program.ver}";
-        this.Size = new Size(340, 430);
-        this.MinimumSize = new Size(340, 430);
+        this.Size = new Size(340, 480);
+        this.MinimumSize = new Size(340, 480);
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;
 
@@ -114,7 +114,7 @@ public class Main : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 9,
+            RowCount = 10,
             Padding = new Padding(6)
         };
         main.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
@@ -179,7 +179,15 @@ public class Main : Form
         flowRec.Controls.Add(new Label { Text = "+ Alt", AutoSize = true, Font = font });
         main.Controls.Add(flowRec, 1, row++);
 
-        // 行7：配置 + 定时
+        // 行7：截图热键（新增）
+        main.Controls.Add(new Label { Text = "截图", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
+        var flowSnap = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
+        cboSnap = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 70, Font = font };
+        flowSnap.Controls.Add(cboSnap);
+        flowSnap.Controls.Add(new Label { Text = "+ Alt", AutoSize = true, Font = font });
+        main.Controls.Add(flowSnap, 1, row++);
+
+        // 行8：配置 + 定时
         main.Controls.Add(new Label { Text = "配置", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
         var scrPan = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
         btnSave = new Button { Text = "保存配置", AutoSize = true, Font = font };
@@ -188,7 +196,7 @@ public class Main : Form
         scrPan.Controls.Add(btnLoad);
         main.Controls.Add(scrPan, 1, row++);
 
-        // 行8：定时设置
+        // 行9：定时设置
         main.Controls.Add(new Label { Text = "定时", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
         var flowTimer = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
         btnTimer = new Button { Text = "定时管理", AutoSize = true, Font = font };
@@ -205,6 +213,7 @@ public class Main : Form
         var keys = WinApi.GetCommonKeys();
         cboHot.Items.AddRange(keys);
         cboHotAlt.Items.AddRange(keys);
+        cboSnap.Items.AddRange(keys);   // 截图下拉共用
         // 额外添加鼠标键（仅记录热键可用）
         cboHotAlt.Items.Add(Keys.LButton);
         cboHotAlt.Items.Add(Keys.RButton);
@@ -219,8 +228,9 @@ public class Main : Form
         btnList.Click += (s, e) => OpenPos();
         btnSave.Click += (s, e) => SaveSc();
         btnLoad.Click += (s, e) => LoadSc();
-        cboHot.SelectedIndexChanged += (s, e) => { if (cboHot.SelectedItem is Keys k) { cfg.ClickHotKey = (int)k; cfg.Save(); hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL); UpdateMacroExclusions(); } };
-        cboHotAlt.SelectedIndexChanged += (s, e) => { if (cboHotAlt.SelectedItem is Keys k) { cfg.HotKeyAltL = (int)k; cfg.Save(); hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL); UpdateMacroExclusions(); } };
+        cboHot.SelectedIndexChanged += (s, e) => { if (cboHot.SelectedItem is Keys k) { cfg.ClickHotKey = (int)k; cfg.Save(); hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL); UpMacExcl(); } };
+        cboHotAlt.SelectedIndexChanged += (s, e) => { if (cboHotAlt.SelectedItem is Keys k) { cfg.HotKeyAltL = (int)k; cfg.Save(); hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL); UpMacExcl(); } };
+        cboSnap.SelectedIndexChanged += (s, e) => { if (cboSnap.SelectedItem is Keys k) { cfg.SnapHotKey = (int)k; cfg.Save(); RegSnapKey(); } };   // 更新截图热键
         btnTimer.Click += (s, e) =>
         {
             using var dlg = new TimerForm(cfg);
@@ -277,49 +287,69 @@ public class Main : Form
         else
             cboHotAlt.SelectedItem = Keys.LButton;
 
-        UpdateMacroExclusions();
+        if (cboSnap.Items.Contains((Keys)cfg.SnapHotKey))
+            cboSnap.SelectedItem = (Keys)cfg.SnapHotKey;
+        else
+            cboSnap.SelectedItem = Keys.S;
+
+        UpMacExcl();
     }
 
-    private void RegisterMacroHotKeys()
+    private void RegMacKeys()
     {
-        UnregisterMacroHotKeys();
+        UnRegMacKeys();
         WinApi.RegisterHotKey(this.Handle, macroRecHotId, 0, (uint)cfg.MacRecHotKey);
         WinApi.RegisterHotKey(this.Handle, macroPlayHotId, 0, (uint)cfg.MacPlayHotKey);
     }
 
-    private void UnregisterMacroHotKeys()
+    private void UnRegMacKeys()
     {
         WinApi.UnregisterHotKey(this.Handle, macroRecHotId);
         WinApi.UnregisterHotKey(this.Handle, macroPlayHotId);
     }
 
-    public void UpdateMacroHotKeys(int newRec, int newPlay)
+    private void RegSnapKey()
+    {
+        UnRegSnapKey();
+        WinApi.RegisterHotKey(this.Handle, snapHotId, WinApi.MOD_ALT, (uint)cfg.SnapHotKey);
+    }
+
+    private void UnRegSnapKey()
+    {
+        WinApi.UnregisterHotKey(this.Handle, snapHotId);
+    }
+
+    public void UpMacKeys(int newRec, int newPlay)
     {
         cfg.MacRecHotKey = newRec;
         cfg.MacPlayHotKey = newPlay;
         cfg.Save();
-        RegisterMacroHotKeys();
-        UpdateMacroExclusions();
+        RegMacKeys();
+        UpMacExcl();
     }
 
-    private void UpdateMacroExclusions()
+    private void UpMacExcl()
     {
         if (macroRec != null)
             macroRec.SetExcluded(cfg.ClickHotKey, cfg.HotKeyAltL, cfg.MacRecHotKey, cfg.MacPlayHotKey);
     }
 
     // ---- 宏控制 ----
-    public void ToggleRecording()
+    public void ToglRecord()
     {
+        // 如果正在播放、截图，禁止录制
+        if (IsPlaying || isSnapping) return;
+
         if (IsRecording)
             StopRecording();
         else
-            StartRecording();
+            StartRecord();
     }
 
-    private void StartRecording()
+    private void StartRecord()
     {
-        if (IsRecording) return;
+        if (IsRecording || core.Running || IsPlaying || isSnapping) return;
+
         macroRec.SetExcluded(cfg.ClickHotKey, cfg.HotKeyAltL, cfg.MacRecHotKey, cfg.MacPlayHotKey);
         macroRec.StartRec();
         IsRecording = true;
@@ -348,6 +378,8 @@ public class Main : Form
 
     public void TogglePlay()
     {
+        if (IsRecording || isSnapping) return;
+
         if (IsPlaying)
             StopPlay();
         else
@@ -356,6 +388,15 @@ public class Main : Form
 
     private void StartPlay()
     {
+        if (core.Running || IsRecording || isSnapping) return;
+
+        // 1. 循环次数为 0 时，不播放并提示
+        if (cfg.PosLoopCount == 0)
+        {
+            MessageBox.Show("循环次数为0，不播放宏", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
         var names = MacIO.GetMacroNames();
         if (names.Length == 0) { MessageBox.Show("无宏可播放"); return; }
         Array.Sort(names);
@@ -363,16 +404,23 @@ public class Main : Form
         var data = MacIO.Load(last);
         if (data == null || data.Items.Count == 0) { MessageBox.Show("宏为空"); return; }
         if (IsPlaying) return;
+
         IsPlaying = true;
         SetStat("播放中...");
         if (chkAutoMin.Checked)
             this.WindowState = FormWindowState.Minimized;
-        macroPlay.Play(data, speed: 1.0, done: () =>
+
+        // 2. 传入循环次数 cfg.PosLoopCount
+        macroPlay.Play(data, loopCount: cfg.PosLoopCount, speed: 1.0, done: () =>
         {
             this.Invoke((Action)(() =>
             {
                 IsPlaying = false;
-                SetStat("播放完成");
+                // 3. 区分无限循环手动停止和正常结束
+                if (cfg.PosLoopCount == -1)
+                    SetStat("已停止");
+                else
+                    SetStat("播放完成");
             }));
         });
     }
@@ -385,9 +433,12 @@ public class Main : Form
         SetStat("已停止");
     }
 
-    // ---- 原有方法 ----
+    // ---- 点击控制（含互斥） ----
     private void StartC()
     {
+        // 互斥：正在录制或播放时禁止启动点击
+        if (IsRecording || IsPlaying || isSnapping) return;
+
         if (cfg.PosLoopCount == 0)
         {
             MessageBox.Show("循环次数为0，不会执行");
@@ -416,16 +467,69 @@ public class Main : Form
 
     private void AddCur()
     {
+        if (core.Running || IsRecording || IsPlaying || isSnapping) return;
+
         var pt = Control.MousePosition;
         core.Add(pt.X, pt.Y, $"P{cfg.PosList.Count + 1}", 0, 0, 0, 0);
-        System.Media.SystemSounds.Beep.Play();  // 蜂鸣提示
+        System.Media.SystemSounds.Beep.Play();
         SetStat($"已记录 ({pt.X},{pt.Y})");
-        // 1秒后恢复状态（若未改变）
         System.Threading.Tasks.Task.Delay(1000).ContinueWith(_ =>
         {
             if (stStat != null && !stStat.IsDisposed && stStat.Text == $"已记录 ({pt.X},{pt.Y})")
                 stStat.Text = "空闲";
         });
+    }
+
+    // ---- 截图添加（新增） ----
+    private void SnapAndAdd()
+    {
+        if (core.Running || IsRecording || IsPlaying || isSnapping) return;
+
+        isSnapping = true;
+        try
+        {
+            bool wasMinimized = false;
+            if (chkAutoMin.Checked)
+            {
+                wasMinimized = true;
+                this.WindowState = FormWindowState.Minimized;
+                this.Hide();
+            }
+
+            using var snap = new SnapForm();
+            if (snap.ShowDialog() == DialogResult.OK && snap.CapturedImage != null)
+            {
+                var bytes = ImgMatch.Bmp2Bytes(snap.CapturedImage);
+                var data = new Config.PosData
+                {
+                    X = 0,
+                    Y = 0,
+                    Desc = $"截图_{DateTime.Now:HHmmss}",
+                    ActType = 0,
+                    ActKey = 0,
+                    OpMode = 0,
+                    WaitMs = 0,
+                    UseImageMatch = true,
+                    ImageTemplate = bytes,
+                    Threshold = 0.8f
+                };
+                cfg.PosList.Add(data);
+                cfg.Save();
+                int w = snap.CapturedImage.Width, h = snap.CapturedImage.Height;
+                MessageBox.Show($"已将图像添加到位置列表，像素值为 {w} × {h}", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            if (wasMinimized)
+            {
+                this.Show();
+                this.WindowState = FormWindowState.Normal;
+                this.Activate();
+            }
+        }
+        finally
+        {
+            isSnapping = false;
+        }
     }
 
     private void SaveSc()
@@ -454,7 +558,6 @@ public class Main : Form
             {
                 string json = System.IO.File.ReadAllText(ofd.FileName);
                 var newCfg = JsonConvert.DeserializeObject<Config>(json)!;
-                // 手动复制所有字段，避免引用混乱
                 cfg.IntervalMs = newCfg.IntervalMs;
                 cfg.PosLoopCount = newCfg.PosLoopCount;
                 cfg.PosList = newCfg.PosList;
@@ -463,6 +566,7 @@ public class Main : Form
                 cfg.HotKeyAltL = newCfg.HotKeyAltL;
                 cfg.MacRecHotKey = newCfg.MacRecHotKey;
                 cfg.MacPlayHotKey = newCfg.MacPlayHotKey;
+                cfg.SnapHotKey = newCfg.SnapHotKey;
                 cfg.TimerEnabled = newCfg.TimerEnabled;
                 cfg.TimerStart = newCfg.TimerStart;
                 cfg.TimerEnd = newCfg.TimerEnd;
@@ -470,8 +574,9 @@ public class Main : Form
                 LoadCfg();
                 core = new Core(cfg);
                 hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL);
-                RegisterMacroHotKeys();
-                UpdateMacroExclusions();
+                RegMacKeys();
+                RegSnapKey();
+                UpMacExcl();
                 if (cfg.TimerEnabled) tCheck.Start(); else tCheck.Stop();
                 MessageBox.Show("配置加载成功");
             }
@@ -497,6 +602,9 @@ public class Main : Form
         {
             if (!core.Running && !manual)
             {
+                // 定时启动也检查互斥
+                if (isSnapping || IsRecording || IsPlaying) return;
+
                 if (cfg.PosLoopCount == 0 || cfg.PosList.Count == 0)
                 {
                     cfg.TimerEnabled = false;
@@ -546,7 +654,7 @@ public class Main : Form
         if (stStat != null && !stStat.IsDisposed)
         {
             stStat.Text = text;
-            StatusChanged?.Invoke(text); // 通知订阅者（如 MacForm）
+            StatusChanged?.Invoke(text);
         }
     }
 
@@ -570,12 +678,17 @@ public class Main : Form
             int id = m.WParam.ToInt32();
             if (id == macroRecHotId)
             {
-                ToggleRecording();
+                ToglRecord();
                 return;
             }
             else if (id == macroPlayHotId)
             {
                 TogglePlay();
+                return;
+            }
+            else if (id == snapHotId)
+            {
+                SnapAndAdd();
                 return;
             }
         }

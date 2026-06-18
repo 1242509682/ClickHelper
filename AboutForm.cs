@@ -76,8 +76,8 @@ namespace ClickHelper
                 "• 宏管理器（录制/回放/编辑）\n" +
                 "• 位置列表支持Esc与Ctrl+C\n" +
                 "• 指定坐标延迟执行\n" +
-                "• 手动记录坐标音效\n" +
                 "• 自动最小化运行\n" +
+                "• 截图匹配点击\n" +
                 "• 运行状态显示\n" +
                 "• 禁止程序多开";
             this.lblFeaturesList.Location = new Point(15, 138);

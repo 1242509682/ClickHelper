@@ -3,56 +3,32 @@
   "WorkspaceRootPath": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\aboutform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:aboutform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\macro\\macform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:macro\\macform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\core.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:core.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\macro\\macdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:macro\\macdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\imgmatch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:imgmatch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\posform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:posform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\timerform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:timerform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\hotkey.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:hotkey.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\macro\\macconv.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:macro\\macconv.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\config.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:config.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\macro\\macio.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:macro\\macio.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\core.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:core.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\macro\\macplay.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:macro\\macplay.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\macro\\macrec.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:macro\\macrec.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -62,7 +38,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Bookmark",
@@ -70,169 +46,93 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "AboutForm.cs",
-              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\AboutForm.cs",
-              "RelativeDocumentMoniker": "AboutForm.cs",
-              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\AboutForm.cs",
-              "RelativeToolTip": "AboutForm.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAApAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "PosForm.cs",
+              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\PosForm.cs",
+              "RelativeDocumentMoniker": "PosForm.cs",
+              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\PosForm.cs",
+              "RelativeToolTip": "PosForm.cs",
+              "ViewState": "AgIAADMAAAAAAAAAAADwvz4AAAAZAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T18:39:24.576Z",
+              "WhenOpened": "2026-06-18T01:24:31.726Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
               "Title": "Program.cs",
-              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Program.cs",
+              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Program.cs",
+              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAhAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T18:04:03.087Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "Core.cs",
-              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Core.cs",
-              "RelativeDocumentMoniker": "Core.cs",
-              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Core.cs",
-              "RelativeToolTip": "Core.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOIAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:05:04.13Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "HotKey.cs",
-              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\HotKey.cs",
-              "RelativeDocumentMoniker": "HotKey.cs",
-              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\HotKey.cs",
-              "RelativeToolTip": "HotKey.cs",
-              "ViewState": "AgIAABsAAAAAAAAAAAAgwD8AAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:04:56.694Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "MacConv.cs",
-              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacConv.cs",
-              "RelativeDocumentMoniker": "Macro\\MacConv.cs",
-              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacConv.cs",
-              "RelativeToolTip": "Macro\\MacConv.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAAgwDUAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:04:50.532Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "MacData.cs",
-              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacData.cs",
-              "RelativeDocumentMoniker": "Macro\\MacData.cs",
-              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacData.cs",
-              "RelativeToolTip": "Macro\\MacData.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:04:40.534Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "PosForm.cs",
-              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\PosForm.cs",
-              "RelativeDocumentMoniker": "PosForm.cs",
-              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\PosForm.cs",
-              "RelativeToolTip": "PosForm.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAUAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:03:40.366Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Main.cs",
-              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Main.cs",
-              "RelativeDocumentMoniker": "Main.cs",
-              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Main.cs",
-              "RelativeToolTip": "Main.cs",
-              "ViewState": "AgIAADQAAAAAAAAAAAD4vzoAAAATAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:03:14.894Z",
+              "WhenOpened": "2026-06-18T01:24:20.989Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "MacForm.cs",
-              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacForm.cs",
-              "RelativeDocumentMoniker": "Macro\\MacForm.cs",
-              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacForm.cs",
-              "RelativeToolTip": "Macro\\MacForm.cs",
-              "ViewState": "AgIAABYAAAAAAAAAAAAAABsAAAAFAAAAAAAAAA==",
+              "Title": "HotKey.cs",
+              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\HotKey.cs",
+              "RelativeDocumentMoniker": "HotKey.cs",
+              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\HotKey.cs",
+              "RelativeToolTip": "HotKey.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:00:41.941Z",
+              "WhenOpened": "2026-06-18T01:24:19.083Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "TimerForm.cs",
-              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\TimerForm.cs",
-              "RelativeDocumentMoniker": "TimerForm.cs",
-              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\TimerForm.cs",
-              "RelativeToolTip": "TimerForm.cs",
-              "ViewState": "AgIAAB4AAAAAAAAAAAAAACIAAAApAAAAAAAAAA==",
+              "DocumentIndex": 5,
+              "Title": "Core.cs",
+              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Core.cs",
+              "RelativeDocumentMoniker": "Core.cs",
+              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Core.cs",
+              "RelativeToolTip": "Core.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:03:17.625Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "MacPlay.cs",
-              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacPlay.cs",
-              "RelativeDocumentMoniker": "Macro\\MacPlay.cs",
-              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacPlay.cs",
-              "RelativeToolTip": "Macro\\MacPlay.cs",
-              "ViewState": "AgIAAB0AAAAAAAAAAAAgwEEAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:01:16.98Z",
+              "WhenOpened": "2026-06-18T01:24:15.92Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "MacRec.cs",
-              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacRec.cs",
-              "RelativeDocumentMoniker": "Macro\\MacRec.cs",
-              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacRec.cs",
-              "RelativeToolTip": "Macro\\MacRec.cs",
-              "ViewState": "AgIAAF4AAAAAAAAAAAAgwIIAAAABAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "ImgMatch.cs",
+              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\ImgMatch.cs",
+              "RelativeDocumentMoniker": "ImgMatch.cs",
+              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\ImgMatch.cs",
+              "RelativeToolTip": "ImgMatch.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAADwvwsAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:01:33.257Z",
+              "WhenOpened": "2026-06-18T01:22:32.437Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "MacIO.cs",
-              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacIO.cs",
-              "RelativeDocumentMoniker": "Macro\\MacIO.cs",
-              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Macro\\MacIO.cs",
-              "RelativeToolTip": "Macro\\MacIO.cs",
-              "ViewState": "AgIAAEoAAAAAAAAAAAAgwG4AAAABAAAAAAAAAA==",
+              "DocumentIndex": 4,
+              "Title": "Config.cs",
+              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Config.cs",
+              "RelativeDocumentMoniker": "Config.cs",
+              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Config.cs",
+              "RelativeToolTip": "Config.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAcwBkAAABhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T17:00:55.966Z",
+              "WhenOpened": "2026-06-18T01:02:15.029Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Main.cs",
+              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Main.cs",
+              "RelativeDocumentMoniker": "Main.cs",
+              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\Main.cs",
+              "RelativeToolTip": "Main.cs",
+              "ViewState": "AgIAABMAAAAAAAAAAAAnwCcAAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T22:20:36.863Z",
               "EditorCaption": ""
             }
           ]

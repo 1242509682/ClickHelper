@@ -127,6 +127,16 @@ internal class Core
 
     private void Exec(Config.PosData pos)
     {
+        if (pos.UseImageMatch && pos.ImageTemplate != null && pos.ImageTemplate.Length > 0)
+        {
+            var pt = ImgMatch.FindTemp(pos.ImageTemplate, pos.Threshold);
+            if (pt.HasValue)
+            {
+                MClick(pt.Value.X, pt.Value.Y, pos.ActKey, pos.OpMode);
+            }
+            return;
+        }
+
         if (pos.ActType == 0)
             MClick(pos.X, pos.Y, pos.ActKey, pos.OpMode);
         else if (pos.ActType == 1)
