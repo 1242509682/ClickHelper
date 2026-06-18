@@ -40,6 +40,7 @@ public class Main : Form
     private int macroPlayHotId = 201;
     private int snapHotId = 202;
     private bool macManual = false;
+    private MacForm? macForm;   // 持有宏管理器引用
 
     // ---- 截图互斥 ----
     private bool isSnapping;
@@ -253,11 +254,7 @@ public class Main : Form
             RegTimerKey();
         };
 
-        btnMacL.Click += (s, e) =>
-        {
-            using var form = new MacForm(cfg, LoadCfg, this);
-            form.ShowDialog();
-        };
+        btnMacL.Click += (s, e) => OpenMacForm();
 
         // 状态栏
         stBar = new StatusStrip { Dock = DockStyle.Bottom, AutoSize = true };
@@ -400,17 +397,35 @@ public class Main : Form
             var mac = new MacData { Name = $"宏_{DateTime.Now:yyyyMMdd_HHmmss}" };
             mac.Items.AddRange(items);
             MacIO.Save(mac);
-
-            using (var macForm = new MacForm(cfg, LoadCfg, this))
-            {
-                macForm.SelectMacroByName(mac.Name);
-                macForm.ShowDialog(this);
-            }
+            // 复用或创建宏管理器，并选中新宏
+            OpenMacForm(mac.Name);
         }
         else
+        {
             MessageBox.Show("未录制到操作");
+        }
         IsRecording = false;
         SetStat("空闲");
+    }
+
+    // 打开宏管理器的统一方法
+    private void OpenMacForm(string? selectMacro = null)
+    {
+        // 如果窗体已存在且未销毁，激活它并刷新
+        if (macForm != null && !macForm.IsDisposed)
+        {
+            macForm.Activate();
+            if (!string.IsNullOrEmpty(selectMacro))
+                macForm.SelectMacroByName(selectMacro);
+            return;
+        }
+
+        // 否则创建新窗体
+        macForm = new MacForm(cfg, LoadCfg, this);
+        macForm.FormClosed += (s, e) => macForm = null;
+        if (!string.IsNullOrEmpty(selectMacro))
+            macForm.SelectMacroByName(selectMacro);
+        macForm.ShowDialog(this);
     }
 
     public void TogglePlay()

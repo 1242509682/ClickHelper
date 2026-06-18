@@ -1,14 +1,18 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\",
+  "WorkspaceRootPath": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.2\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\aboutform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.2\\main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:main.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.2\\aboutform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:aboutform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\animform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:animform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|d:\\\u6E38\u620F\\terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.2\\readme.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{68DB3DA1-0716-4271-F798-9864B844476A}|ClickHelper.csproj|solutionrelative:readme.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,7 +22,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -27,27 +31,40 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "AboutForm.cs",
-              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\AboutForm.cs",
-              "RelativeDocumentMoniker": "AboutForm.cs",
-              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\AboutForm.cs",
-              "RelativeToolTip": "AboutForm.cs",
-              "ViewState": "AgIAAGMAAAAAAAAAAAAAAFAAAAAhAAAAAAAAAA==",
+              "Title": "Main.cs",
+              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.2\\Main.cs",
+              "RelativeDocumentMoniker": "Main.cs",
+              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.2\\Main.cs",
+              "RelativeToolTip": "Main.cs",
+              "ViewState": "AgIAAI8BAAAAAAAAAAAowKIBAAApAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-18T21:31:06.873Z",
+              "WhenOpened": "2026-06-18T22:00:44.224Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "README.md",
+              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.2\\README.md",
+              "RelativeDocumentMoniker": "README.md",
+              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.2\\README.md",
+              "RelativeToolTip": "README.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-06-18T21:50:21.04Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "AnimForm.cs",
-              "DocumentMoniker": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\AnimForm.cs",
-              "RelativeDocumentMoniker": "AnimForm.cs",
-              "ToolTip": "d:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.1\\AnimForm.cs",
-              "RelativeToolTip": "AnimForm.cs",
-              "ViewState": "AgIAAH4AAAAAAAAAAAAAAIEAAAAsAAAAAAAAAA==",
+              "Title": "AboutForm.cs",
+              "DocumentMoniker": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.2\\AboutForm.cs",
+              "RelativeDocumentMoniker": "AboutForm.cs",
+              "ToolTip": "D:\\\u6E38\u620F\\Terraria\\\u670D\u52A1\u5668\\1.4.5\\\u63D2\u4EF6\u6E90\u7801\\\u3010\u6E90\u7801\u3011\u70B9\u51FB\u52A9\u624B v1.0.2\\AboutForm.cs",
+              "RelativeToolTip": "AboutForm.cs",
+              "ViewState": "AgIAADYAAAAAAAAAAAAAAEoAAAAnAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-18T19:04:14.644Z",
+              "WhenOpened": "2026-06-18T21:31:06.873Z",
               "EditorCaption": ""
             }
           ]
