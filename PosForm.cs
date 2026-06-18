@@ -320,7 +320,7 @@ public class PosForm : Form
     }
 
     // ---- 内部编辑对话框 ----
-    private class PosEdit : Form
+    public class PosEdit : Form
     {
         public int NewX, NewY, NewActType, NewActKey, NewModKey, NewOpMode, NewWaitMs;
         public string NewDesc = "";
@@ -337,7 +337,7 @@ public class PosForm : Form
         private NumericUpDown numThreshold;
         private byte[]? currentTemplate;
 
-        public PosEdit(Config.PosData pos)
+        internal PosEdit(Config.PosData pos)
         {
             this.Text = "编辑位置";
             this.Size = new Size(380, 540);

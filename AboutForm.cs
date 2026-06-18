@@ -73,13 +73,12 @@ namespace ClickHelper
             this.lblFeaturesList.Font = new Font("微软雅黑", 9F);
             this.lblFeaturesList.Size = new Size(280, 150);
             this.lblFeaturesList.Text =
-                "• 宏管理器（录制/回放/编辑）\n" +
-                "• 位置列表支持Esc与Ctrl+C\n" +
-                "• 指定坐标延迟执行\n" +
-                "• 自动最小化运行\n" +
-                "• 截图匹配点击\n" +
-                "• 运行状态显示\n" +
-                "• 禁止程序多开";
+                "• 定时功能加强(宏播放/倒计时)\n" +
+                "• 截图完成自动弹出编辑窗口\n" +
+                "• 宏管理器支持Delete与Ctrl+C\n" +
+                "• 修复最小化时自动隐藏到托盘\n" +
+                "• 记录鼠标坐标‘进度圈’动画\n" +
+                "• 修复一些交互性BUG..";
             this.lblFeaturesList.Location = new Point(15, 138);
 
             // 复选框
@@ -102,7 +101,7 @@ namespace ClickHelper
             this.Controls.Add(this.chkNoShow);
             this.Controls.Add(this.btnOk);
 
-            this.ClientSize = new Size(230, 380);   // 固定大小
+            this.ClientSize = new Size(250, 370);   // 固定大小
             this.Text = "关于点击助手";
             this.ResumeLayout(false);
             this.PerformLayout();

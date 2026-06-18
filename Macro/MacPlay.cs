@@ -35,14 +35,15 @@ public class MacPlay
             try
             {
                 int totalCount = 0;
+                var sw = Stopwatch.StartNew();
                 while (true)
                 {
+                    sw.Restart();
                     if (loopCount > 0 && totalCount >= loopCount)
                         break;
                     if (tok.IsCancellationRequested)
                         break;
 
-                    var sw = Stopwatch.StartNew();
                     int idx = 0;
                     while (idx < data.Items.Count && !tok.IsCancellationRequested)
                     {

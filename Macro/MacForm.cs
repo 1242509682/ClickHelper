@@ -345,15 +345,67 @@ public class MacForm : Form
         {
             Close();
             e.Handled = true;
+            return;
         }
-        else if (e.Control && e.KeyCode == Keys.C)
+
+        // 焦点在宏文件列表
+        if (lstFiles.Focused)
         {
-            if (lstItems.Focused && lstItems.SelectedItem != null)
+            if (e.KeyCode == Keys.Delete)
             {
-                Clipboard.SetText(lstItems.SelectedItem.ToString());
+                DelMac();   // 删除当前选中的宏文件
+                e.Handled = true;
+            }
+            // Ctrl+C 在文件列表无意义，不处理
+            return;
+        }
+
+        // 焦点在指令列表
+        if (lstItems.Focused)
+        {
+            if (e.KeyCode == Keys.Delete)
+            {
+                DelItem();  // 删除选中的指令
+                e.Handled = true;
+            }
+            else if (e.Control && e.KeyCode == Keys.C)
+            {
+                CopyItem(); // 复制指令并插入（新增方法）
                 e.Handled = true;
             }
         }
+    }
+
+    // 复制项
+    private void CopyItem()
+    {
+        if (curMacro == null) return;
+        int idx = lstItems.SelectedIndex;
+        if (idx < 0) return;
+
+        var data = MacIO.Load(curMacro);
+        if (data == null || idx >= data.Items.Count) return;
+
+        // 复制选中的 MacItem
+        var src = data.Items[idx];
+        var copy = new MacItem
+        {
+            Act = src.Act,
+            X = src.X,
+            Y = src.Y,
+            Key = src.Key,
+            Delta = src.Delta,
+            Time = src.Time   // 时间相同，可后续手动调整
+        };
+
+        // 插入到选中项之后
+        int insertIdx = idx + 1;
+        data.Items.Insert(insertIdx, copy);
+        MacIO.Save(data);
+
+        LoadItems();
+        lstItems.SelectedIndex = insertIdx;
+        changed?.Invoke();
     }
 
     // ---- 热键下拉 ----
@@ -626,6 +678,24 @@ public class MacForm : Form
                 changed?.Invoke();
             }
         }
+    }
+
+    public void SelectMacroByName(string name)
+    {
+        // 遍历 lstFiles.Items，查找显示文本对应的真实名称
+        foreach (var item in lstFiles.Items)
+        {
+            string display = item.ToString();
+            if (fileMap.TryGetValue(display, out string realName) && realName == name)
+            {
+                lstFiles.SelectedItem = display;
+                LoadItems();
+                return;
+            }
+        }
+        // 如果找不到，选择第一个
+        if (lstFiles.Items.Count > 0)
+            lstFiles.SelectedIndex = 0;
     }
 
     // ---- 内部编辑对话框 ----

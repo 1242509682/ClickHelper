@@ -9,21 +9,27 @@ namespace ClickHelper;
 /// <summary> 配置数据 </summary>
 internal class Config
 {
-    [JsonProperty("跳过关于", Order = -1)] public bool SkipAbout { get; set; } = false;
-    [JsonProperty("点击间隔", Order = 0)] public int IntervalMs { get; set; } = 200;
-    [JsonProperty("循环次数", Order = 1)] public int PosLoopCount { get; set; } = -1;
-    [JsonProperty("启动热键", Order = 2)] public int ClickHotKey { get; set; } = (int)Keys.F9;
-    [JsonProperty("同时执行", Order = 3)] public bool SimulExec { get; set; } = false;
-    [JsonProperty("记录热键", Order = 4)] public int HotKeyAltL { get; set; } = (int)Keys.S;
-    [JsonProperty("位置列表", Order = 5)] public List<PosData> PosList { get; set; } = new();
+    [JsonProperty("跳过关于", Order = -10)] public bool SkipAbout { get; set; } = false;
+    [JsonProperty("点击间隔", Order = -9)] public int IntervalMs { get; set; } = 200;
+    [JsonProperty("循环次数", Order = -8)] public int PosLoopCount { get; set; } = -1;
+    [JsonProperty("启动热键", Order = -7)] public int ClickHotKey { get; set; } = (int)Keys.F9;
+    [JsonProperty("同时执行", Order = -6)] public bool SimulExec { get; set; } = false;
+    [JsonProperty("记录热键", Order = -5)] public int HotKeyAltL { get; set; } = (int)Keys.S;
 
-    [JsonProperty("定时启用", Order = 6)] public bool TimerEnabled { get; set; } = false;
+    [JsonProperty("定时开关", Order = 5)] public bool TimerEnabled { get; set; } = false;
+    [JsonProperty("定时模式", Order = 6)] public int TimerMode { get; set; } = 0;   // 0=日期模式, 1=计时模式
     [JsonProperty("定时开始", Order = 7)] public DateTime TimerStart { get; set; } = DateTime.Now;
     [JsonProperty("定时结束", Order = 8)] public DateTime TimerEnd { get; set; } = DateTime.MinValue;
+    [JsonProperty("定时时长", Order = 9)] public int TimerDuration { get; set; } = 60;  // 仅计时模式有效
+    [JsonProperty("定时目标", Order = 10)] public int TimeType { get; set; } = 0;   // 0=位置列表, 1=宏播放
+    [JsonProperty("定时宏", Order = 11)] public string MacroName { get; set; } = "";
+    [JsonProperty("定时热键", Order = 12)] public int TimerHotKey { get; set; } = (int)Keys.F8;
 
-    [JsonProperty("宏录制热键", Order = 10)] public int MacRecHotKey { get; set; } = (int)Keys.F6;
-    [JsonProperty("宏播放热键", Order = 11)] public int MacPlayHotKey { get; set; } = (int)Keys.F7;
-    [JsonProperty("截图热键", Order = 12)] public int SnapHotKey { get; set; } = (int)Keys.A;   // 新增
+    [JsonProperty("宏录制热键", Order = 20)] public int MacRecHotKey { get; set; } = (int)Keys.F6;
+    [JsonProperty("宏播放热键", Order = 21)] public int MacPlayHotKey { get; set; } = (int)Keys.F7;
+    [JsonProperty("截图热键", Order = 22)] public int SnapHotKey { get; set; } = (int)Keys.A;   // 新增
+
+    [JsonProperty("位置列表", Order = 23)] public List<PosData> PosList { get; set; } = new();
 
     /// <summary> 单个位置/操作数据 </summary>
     public class PosData
