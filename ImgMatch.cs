@@ -2,7 +2,7 @@
 using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Forms;
-using OpenCvSharp;
+using ImageFinderNS;
 
 namespace ClickHelper;
 
@@ -21,40 +21,47 @@ public static class ImgMatch
         return new Bitmap(ms);
     }
 
-    public static System.Drawing.Point? FindTemp(byte[] tempData, float thresh = 0.8f)
+    public static Point? FindTemp(byte[] tempData, float thresh = 0.8f)
     {
         try
         {
-            // 隐藏鼠标指针，避免鼠标图标干扰模板匹配
             Cursor.Hide();
 
-            var screen = CaptureScr();
-            byte[] scrBytes;
-            using (var ms = new MemoryStream()) { screen.Save(ms, ImageFormat.Png); scrBytes = ms.ToArray(); }
-            using var tempMat = Mat.FromImageData(tempData, ImreadModes.Color);
-            using var scrMat = Mat.FromImageData(scrBytes, ImreadModes.Color);
-            if (tempMat.Width > scrMat.Width || tempMat.Height > scrMat.Height) return null;
-            using var result = new Mat();
-            Cv2.MatchTemplate(scrMat, tempMat, result, TemplateMatchModes.CCoeffNormed);
-            Cv2.MinMaxLoc(result, out _, out double maxVal, out _, out OpenCvSharp.Point maxLoc);
-            if (maxVal >= thresh)
+            // 1. 截取主屏幕（避免超过 ImageFinder 最大尺寸 2560x2560）
+            using var scrBmp = CaptureScr();       // 8 字符
+            // 2. 模板图像
+            using var tplBmp = Bytes2Bmp(tempData); // 6 字符
+
+            if (tplBmp.Width > scrBmp.Width || tplBmp.Height > scrBmp.Height)
+                return null;
+
+            // 3. 设置源图（必须）
+            ImageFinder.SetSource(scrBmp);
+
+            // 4. 执行匹配（返回 List<Match>，默认按相似度降序排列）
+            var matches = ImageFinder.Find(tplBmp, thresh);
+
+            if (matches != null && matches.Count > 0)
             {
-                int cx = maxLoc.X + tempMat.Width / 2;
-                int cy = maxLoc.Y + tempMat.Height / 2;
-                return new System.Drawing.Point(cx, cy);
+                // 取第一个（最佳匹配）
+                var match = matches[0];
+                var loc = match.Zone.Location;          // 左上角坐标
+                int cx = loc.X + tplBmp.Width / 2;
+                int cy = loc.Y + tplBmp.Height / 2;
+                return new Point(cx, cy);
             }
             return null;
         }
         finally
         {
-            // 确保鼠标指针恢复显示
             Cursor.Show();
         }
     }
 
     private static Bitmap CaptureScr()
     {
-        var bounds = SystemInformation.VirtualScreen;
+        // 只截主屏幕，通常不超过 2560x2560，避免超限
+        var bounds = Screen.PrimaryScreen.Bounds;   // 6 字符
         var bmp = new Bitmap(bounds.Width, bounds.Height, PixelFormat.Format24bppRgb);
         using var g = Graphics.FromImage(bmp);
         g.CopyFromScreen(bounds.X, bounds.Y, 0, 0, bounds.Size);

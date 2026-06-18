@@ -5,14 +5,16 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
 	  <ApplicationIcon>Icon\YX.ico</ApplicationIcon>
+	  <!-- 忽略 NU1701 警告 -->
+	  <NoWarn>NU1701</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Icon\tray.ico" />
     <EmbeddedResource Include="Icon\YX.ico" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="ImageFinder" Version="1.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="OpenCvSharp4.Windows" Version="4.13.0.20260602" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Settings.Designer.cs">
