@@ -42,8 +42,8 @@ internal class Config
         [JsonProperty("修饰键")] public int ModKey { get; set; } = 0;
         [JsonProperty("操作模式")] public int OpMode { get; set; } = 0;    // 0单击 1按下 2弹起
         [JsonProperty("等待毫秒")] public int WaitMs { get; set; } = 0;
-        [JsonProperty("使用图像匹配")] public bool UseImageMatch { get; set; } = false;
-        [JsonProperty("图像模板")] public byte[]? ImageTemplate { get; set; }
+        [JsonProperty("使用图像匹配")] public bool UseImage { get; set; } = false;
+        [JsonProperty("图像模板")] public byte[]? ImageTemp { get; set; }
         [JsonProperty("匹配阈值")] public float Threshold { get; set; } = 0.8f;
     }
 

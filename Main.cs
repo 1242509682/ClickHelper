@@ -19,7 +19,7 @@ public class Main : Form
     private ComboBox cboHot, cboHotAlt, cboSnap;
     private Button btnTimer;
     private StatusStrip stBar;
-    private ToolStripStatusLabel stStat, stCoord;
+    private ToolStripStatusLabel stStat, stCoord, stOcr;   // 新增 stOcr
 
     private Config cfg;
     private Core core;
@@ -62,7 +62,7 @@ public class Main : Form
 
         cfg = Config.Load();
         core = new Core(cfg);
-        hk = new HotKey(this.Handle, OnHotKey, AddCur, cfg.ClickHotKey, cfg.HotKeyAltL);
+        hk = new HotKey(this.Handle, OnHotKey, GetPos, cfg.ClickHotKey, cfg.HotKeyAltL);
 
         macroRec = new MacRec();
         macroPlay = new MacPlay();
@@ -86,6 +86,7 @@ public class Main : Form
             UnTimerKey();
             tray!.Visible = false;
             tray.Dispose();
+            OcrHelper.Dispose(); // 卸载ocr引擎
             Application.Exit();
         };
 
@@ -99,6 +100,7 @@ public class Main : Form
             }
             isAboutShowing = false;
             this.CenterToScreen();
+            this.UpdateOcrStatus();   // 确保状态栏正确显示当前 OCR 状态
         };
 
         this.Resize += (s, e) =>
@@ -120,18 +122,97 @@ public class Main : Form
 
     private void InitUI()
     {
-        this.Text = $"点击助手 {Program.ver}";
-        this.Size = new Size(340, 480);
-        this.MinimumSize = new Size(340, 480);
-        this.FormBorderStyle = FormBorderStyle.FixedSingle;
+        // 移除系统标题栏，启用自定义
+        this.FormBorderStyle = FormBorderStyle.None;
+        this.Size = new Size(360, 500);
+        this.MinimumSize = new Size(360, 500);
         this.MaximizeBox = false;
+        this.BackColor = Color.FromArgb(240, 244, 248);
 
+        // ---- 顶层容器（垂直排列） ----
+        var mainContainer = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            BackColor = Color.Transparent
+        };
+        mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // 标题栏行
+        mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // 内容行
+
+        // ---- 自定义标题栏 ----
+        var titleBar = new Panel
+        {
+            Height = 32,
+            Dock = DockStyle.Fill,
+            BackColor = Color.FromArgb(0, 80, 180), // 深蓝背景
+            Margin = new Padding(0)
+        };
+        // 标题文字
+        var lblTitle = new Label
+        {
+            Text = $"点击助手 {Program.ver}",
+            Font = new Font("微软雅黑", 10F, FontStyle.Bold),
+            ForeColor = Color.White,
+            AutoSize = true,
+            Location = new Point(10, 6)
+        };
+        titleBar.Controls.Add(lblTitle);
+
+        // 最小化按钮
+        var btnMin = new Button
+        {
+            Text = "─",
+            Font = new Font("微软雅黑", 9F),
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 0 },
+            ForeColor = Color.White,
+            BackColor = Color.Transparent,
+            Size = new Size(28, 28),
+            Location = new Point(this.Width - 60, 2)
+        };
+        btnMin.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
+        btnMin.MouseEnter += (s, e) => btnMin.BackColor = Color.FromArgb(60, 120, 200);
+        btnMin.MouseLeave += (s, e) => btnMin.BackColor = Color.Transparent;
+
+        // 关闭按钮
+        var btnClose = new Button
+        {
+            Text = "✕",
+            Font = new Font("微软雅黑", 9F),
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 0 },
+            ForeColor = Color.White,
+            BackColor = Color.Transparent,
+            Size = new Size(28, 28),
+            Location = new Point(this.Width - 30, 2)
+        };
+        btnClose.Click += (s, e) => this.Close();
+        btnClose.MouseEnter += (s, e) => { btnClose.BackColor = Color.Red; btnClose.ForeColor = Color.White; };
+        btnClose.MouseLeave += (s, e) => { btnClose.BackColor = Color.Transparent; btnClose.ForeColor = Color.White; };
+
+        titleBar.Controls.Add(btnMin);
+        titleBar.Controls.Add(btnClose);
+        // 拖拽移动
+        titleBar.MouseDown += (s, e) =>
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                WinApi.ReleaseCapture();
+                WinApi.SendMessage(this.Handle, 0xA1, (IntPtr)2, IntPtr.Zero);
+            }
+        };
+
+        mainContainer.Controls.Add(titleBar, 0, 0);
+
+        // ---- 内容区（原有布局，直接移入） ----
         var main = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 10,
-            Padding = new Padding(6)
+            Padding = new Padding(12, 8, 12, 8),
+            BackColor = Color.Transparent
         };
         main.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
         main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -139,88 +220,210 @@ public class Main : Form
             main.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         Font font = new Font("微软雅黑", 8.5F);
-        ToolTip tip = new();
+        Font lblFont = new Font("微软雅黑", 8.5F, FontStyle.Bold);
+        ToolTip tip = new ToolTip();
         int row = 0;
 
-        // 行0：间隔 + 启动/停止
+        // ---- 间隔 + 启动/停止 ----
         var flowCtrl = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        numInt = new NumericUpDown { Minimum = 1, Maximum = 1800000, Value = 50, Width = 60, Font = font };
+        numInt = new NumericUpDown
+        {
+            Minimum = 1,
+            Maximum = 1800000,
+            Value = 50,
+            Width = 65,
+            Font = font,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
         tip.SetToolTip(numInt, "单位毫秒,1~1800000");
         flowCtrl.Controls.Add(numInt);
-        btnStart = new Button { Text = "启动", Width = 55, AutoSize = true, Font = font };
-        btnStop = new Button { Text = "停止", Width = 55, AutoSize = true, Enabled = false, Font = font };
+
+        btnStart = new Button
+        {
+            Text = "启动",
+            Width = 55,
+            AutoSize = true,
+            Font = font,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(0, 180, 255) },
+            BackColor = Color.FromArgb(225, 240, 255),
+            ForeColor = Color.FromArgb(0, 80, 180)
+        };
+        btnStop = new Button
+        {
+            Text = "停止",
+            Width = 55,
+            AutoSize = true,
+            Enabled = false,
+            Font = font,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(255, 150, 100) },
+            BackColor = Color.FromArgb(255, 235, 225),
+            ForeColor = Color.FromArgb(180, 60, 0)
+        };
         flowCtrl.Controls.Add(btnStart);
         flowCtrl.Controls.Add(btnStop);
-        main.Controls.Add(new Label { Text = "间隔", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
+        main.Controls.Add(new Label { Text = "间隔", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
         main.Controls.Add(flowCtrl, 1, row++);
 
-        // 行1：自动最小化
-        chkAutoMin = new CheckBox { Text = "自动最小化", AutoSize = true, Font = font };
+        // ---- 自动最小化 ----
+        chkAutoMin = new CheckBox
+        {
+            Text = "自动最小化",
+            AutoSize = true,
+            Font = font,
+            ForeColor = Color.FromArgb(40, 60, 90)
+        };
         main.Controls.Add(new Label { Text = "", AutoSize = true }, 0, row);
         main.Controls.Add(chkAutoMin, 1, row++);
 
-        // 行2：位置列表
-        btnList = new Button { Text = "位置列表", AutoSize = true, Font = font };
-        main.Controls.Add(new Label { Text = "位置", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
-        main.Controls.Add(btnList, 1, row++);
-
-        // 行3：宏管理
-        main.Controls.Add(new Label { Text = "录制", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
-        var flowMac = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        var btnMacL = new Button { Text = "宏管理器", AutoSize = true, Font = font };
-        flowMac.Controls.Add(btnMacL);
-        main.Controls.Add(flowMac, 1, row++);
-
-        // 行4：循环 + 同时执行
+        // ---- 循环 + 同时执行 ----
         var flowLoop = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        numLoop = new NumericUpDown { Minimum = -1, Maximum = 99999, Value = -1, Width = 60, Font = font };
+        numLoop = new NumericUpDown
+        {
+            Minimum = -1,
+            Maximum = 99999,
+            Value = -1,
+            Width = 60,
+            Font = font,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
         tip.SetToolTip(numLoop, "-1无限，0不循环");
         flowLoop.Controls.Add(numLoop);
         flowLoop.Controls.Add(new Label { Text = "  ", AutoSize = true });
-        chkSim = new CheckBox { Text = "批量执行", AutoSize = true, Font = font };
+        chkSim = new CheckBox
+        {
+            Text = "批量执行",
+            AutoSize = true,
+            Font = font,
+            ForeColor = Color.FromArgb(40, 60, 90)
+        };
         flowLoop.Controls.Add(chkSim);
-        main.Controls.Add(new Label { Text = "循环", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
+        main.Controls.Add(new Label { Text = "循环", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
         main.Controls.Add(flowLoop, 1, row++);
 
-        // 行5：启动热键
-        main.Controls.Add(new Label { Text = "热键", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
-        cboHot = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 70, Font = font };
+        // ---- 热键 ----
+        main.Controls.Add(new Label { Text = "热键", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
+        cboHot = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 70,
+            Font = font,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
         main.Controls.Add(cboHot, 1, row++);
 
-        // 行6：记录热键
-        main.Controls.Add(new Label { Text = "记录", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
+        // ---- 记录 ----
+        main.Controls.Add(new Label { Text = "记录", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
         var flowRec = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        cboHotAlt = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 70, Font = font };
+        cboHotAlt = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 70,
+            Font = font,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
         flowRec.Controls.Add(cboHotAlt);
-        flowRec.Controls.Add(new Label { Text = "+ Alt", AutoSize = true, Font = font });
+        flowRec.Controls.Add(new Label { Text = "+ Alt", AutoSize = true, Font = font, ForeColor = Color.DimGray });
         main.Controls.Add(flowRec, 1, row++);
 
-        // 行7：截图热键
-        main.Controls.Add(new Label { Text = "截图", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
+        // ---- 截图 ----
+        main.Controls.Add(new Label { Text = "截图", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
         var flowSnap = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        cboSnap = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 70, Font = font };
+        cboSnap = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 70,
+            Font = font,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
         flowSnap.Controls.Add(cboSnap);
-        flowSnap.Controls.Add(new Label { Text = "+ Alt", AutoSize = true, Font = font });
+        flowSnap.Controls.Add(new Label { Text = "+ Alt", AutoSize = true, Font = font, ForeColor = Color.DimGray });
         main.Controls.Add(flowSnap, 1, row++);
 
-        // 行8：配置 + 定时
-        main.Controls.Add(new Label { Text = "配置", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
+        // ---- 位置列表 ----
+        btnList = new Button
+        {
+            Text = "位置列表",
+            AutoSize = true,
+            Font = font,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(0, 180, 255) },
+            BackColor = Color.FromArgb(225, 240, 255),
+            ForeColor = Color.FromArgb(0, 80, 180)
+        };
+        main.Controls.Add(new Label { Text = "位置", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
+        main.Controls.Add(btnList, 1, row++);
+
+        // ---- 宏管理器 ----
+        main.Controls.Add(new Label { Text = "录制", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
+        var flowMac = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
+        var btnMacL = new Button
+        {
+            Text = "宏管理器",
+            AutoSize = true,
+            Font = font,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(255, 180, 0) },
+            BackColor = Color.FromArgb(255, 245, 225),
+            ForeColor = Color.FromArgb(180, 100, 0)
+        };
+        flowMac.Controls.Add(btnMacL);
+        main.Controls.Add(flowMac, 1, row++);
+
+        // ---- 定时管理 ----
+        main.Controls.Add(new Label { Text = "定时", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
+        var flowTimer = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
+        btnTimer = new Button
+        {
+            Text = "定时管理",
+            AutoSize = true,
+            Font = font,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(200, 150, 255) },
+            BackColor = Color.FromArgb(240, 230, 255),
+            ForeColor = Color.FromArgb(100, 50, 160)
+        };
+        flowTimer.Controls.Add(btnTimer);
+        main.Controls.Add(flowTimer, 1, row++);
+
+        // ---- 配置管理 ----
+        main.Controls.Add(new Label { Text = "配置", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
         var scrPan = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        btnSave = new Button { Text = "保存配置", AutoSize = true, Font = font };
-        btnLoad = new Button { Text = "加载配置", AutoSize = true, Font = font };
+        btnSave = new Button
+        {
+            Text = "保存配置",
+            AutoSize = true,
+            Font = font,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 200, 100) },
+            BackColor = Color.FromArgb(230, 245, 230),
+            ForeColor = Color.FromArgb(0, 120, 0)
+        };
+        btnLoad = new Button
+        {
+            Text = "加载配置",
+            AutoSize = true,
+            Font = font,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 200, 200) },
+            BackColor = Color.FromArgb(225, 245, 245),
+            ForeColor = Color.FromArgb(0, 100, 120)
+        };
         scrPan.Controls.Add(btnSave);
         scrPan.Controls.Add(btnLoad);
         main.Controls.Add(scrPan, 1, row++);
 
-        // 行9：定时设置
-        main.Controls.Add(new Label { Text = "定时", AutoSize = true, Font = font, Margin = new Padding(0, 4, 0, 0) }, 0, row);
-        var flowTimer = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        btnTimer = new Button { Text = "定时管理", AutoSize = true, Font = font };
-        flowTimer.Controls.Add(btnTimer);
-        main.Controls.Add(flowTimer, 1, row++);
+        // 将内容放入容器
+        mainContainer.Controls.Add(main, 0, 1);
+        this.Controls.Add(mainContainer);
 
-        this.Controls.Add(main);
-
+        // ---- 状态栏（原样） ----
         mTimer = new Timer { Interval = 100 };
         mTimer.Tick += (s, e) => UpInfo();
         mTimer.Start();
@@ -234,7 +437,7 @@ public class Main : Form
         cboHotAlt.Items.Add(Keys.RButton);
         cboHotAlt.Items.Add(Keys.MButton);
 
-        // ---- 事件绑定 ----
+        // ---- 事件绑定（保持不变） ----
         btnStart.Click += (s, e) => StartC();
         btnStop.Click += (s, e) => StopC();
         numInt.ValueChanged += (s, e) => { cfg.IntervalMs = (int)numInt.Value; cfg.Save(); core.SetInt(cfg.IntervalMs); };
@@ -246,21 +449,46 @@ public class Main : Form
         cboHot.SelectedIndexChanged += (s, e) => { if (cboHot.SelectedItem is Keys k) { cfg.ClickHotKey = (int)k; cfg.Save(); hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL); UpMacExcl(); } };
         cboHotAlt.SelectedIndexChanged += (s, e) => { if (cboHotAlt.SelectedItem is Keys k) { cfg.HotKeyAltL = (int)k; cfg.Save(); hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL); UpMacExcl(); } };
         cboSnap.SelectedIndexChanged += (s, e) => { if (cboSnap.SelectedItem is Keys k) { cfg.SnapHotKey = (int)k; cfg.Save(); RegSnapKey(); } };
-
         btnTimer.Click += (s, e) =>
         {
             using var dlg = new TimerForm(cfg);
             dlg.ShowDialog(this);
             RegTimerKey();
         };
-
         btnMacL.Click += (s, e) => OpenMacForm();
 
         // 状态栏
-        stBar = new StatusStrip { Dock = DockStyle.Bottom, AutoSize = true };
-        stStat = new ToolStripStatusLabel("空闲") { Spring = false, TextAlign = ContentAlignment.MiddleLeft, Width = 60, AutoSize = true };
-        stCoord = new ToolStripStatusLabel("X:0 Y:0") { Spring = false, TextAlign = ContentAlignment.MiddleRight, AutoSize = true };
+        stBar = new StatusStrip
+        {
+            Dock = DockStyle.Bottom,
+            AutoSize = true,
+            BackColor = Color.FromArgb(230, 235, 240)
+        };
+        stOcr = new ToolStripStatusLabel(OcrHelper.Engine != null ? "ocr已加载" : "ocr未加载")
+        {
+            Width = 60,
+            Spring = false,
+            AutoSize = true,
+            ForeColor = OcrHelper.Engine != null ? Color.Green : Color.Red,
+            TextAlign = ContentAlignment.MiddleLeft,
+        };
+        stBar.Items.Add(stOcr);
+        stStat = new ToolStripStatusLabel("空闲")
+        {
+            Spring = false,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Width = 60,
+            AutoSize = true,
+            ForeColor = Color.FromArgb(40, 60, 90)
+        };
         stBar.Items.Add(stStat);
+        stCoord = new ToolStripStatusLabel("X:0 Y:0")
+        {
+            Spring = false,
+            TextAlign = ContentAlignment.MiddleRight,
+            AutoSize = true,
+            ForeColor = Color.DimGray
+        };
         stBar.Items.Add(stCoord);
         this.Controls.Add(stBar);
     }
@@ -323,19 +551,14 @@ public class Main : Form
 
     private void UnRegMacKeys()
     {
-        WinApi.UnregisterHotKey(this.Handle, macroRecHotId);
-        WinApi.UnregisterHotKey(this.Handle, macroPlayHotId);
+        WinApi.RegisterHotKey(this.Handle, macroRecHotId);
+        WinApi.RegisterHotKey(this.Handle, macroPlayHotId);
     }
 
     private void RegSnapKey()
     {
-        UnRegSnapKey();
+        WinApi.RegisterHotKey(this.Handle, snapHotId);
         WinApi.RegisterHotKey(this.Handle, snapHotId, WinApi.MOD_ALT, (uint)cfg.SnapHotKey);
-    }
-
-    private void UnRegSnapKey()
-    {
-        WinApi.UnregisterHotKey(this.Handle, snapHotId);
     }
 
     private void RegTimerKey()
@@ -346,7 +569,7 @@ public class Main : Form
 
     private void UnTimerKey()
     {
-        WinApi.UnregisterHotKey(this.Handle, timerHotId);
+        WinApi.RegisterHotKey(this.Handle, timerHotId);
     }
 
     public void UpMacKeys(int newRec, int newPlay)
@@ -370,7 +593,7 @@ public class Main : Form
         if (IsPlaying || isSnapping) return;
 
         if (IsRecording)
-            StopRecording();
+            StopRecord();
         else
             StartRecord();
     }
@@ -387,7 +610,7 @@ public class Main : Form
             this.WindowState = FormWindowState.Minimized;
     }
 
-    private void StopRecording()
+    private void StopRecord()
     {
         if (!IsRecording) return;
         macroRec.StopRec();
@@ -428,7 +651,8 @@ public class Main : Form
         macForm.ShowDialog(this);
     }
 
-    public void TogglePlay()
+    #region 宏播放状态管理
+    public void SwitchPlay()
     {
         if (IsRecording || isSnapping) return;
 
@@ -479,7 +703,8 @@ public class Main : Form
         IsPlaying = false;
         macManual = true;
         SetStat("已停止");
-    }
+    } 
+    #endregion
 
     // ---- 点击控制 ----
     private void StartC()
@@ -512,7 +737,8 @@ public class Main : Form
         SetStat("空闲");
     }
 
-    private void AddCur()
+    #region 获取鼠标坐标
+    private void GetPos()
     {
         if (core.Running || IsRecording || IsPlaying || isSnapping) return;
 
@@ -521,35 +747,30 @@ public class Main : Form
 
         // 显示水波动画（仅记录坐标时）
         new AnimForm(pt).Show();
-        SetStat($"已记录 ({pt.X},{pt.Y})");
-        System.Threading.Tasks.Task.Delay(1000).ContinueWith(_ =>
-        {
-            if (stStat != null && !stStat.IsDisposed && stStat.Text == $"已记录 ({pt.X},{pt.Y})")
-                stStat.Text = "空闲";
-        });
     }
+    #endregion
 
-    // ---- 截图添加 ----
-    private void SnapAndAdd()
+    #region 添加截图
+    private void AddSnap()
     {
         if (core.Running || IsRecording || IsPlaying || isSnapping) return;
 
         isSnapping = true;
         try
         {
-            bool wasMinimized = false;
+            bool was = false;
             if (chkAutoMin.Checked)
             {
-                wasMinimized = true;
+                was = true;
                 this.WindowState = FormWindowState.Minimized;
                 this.Hide();
             }
 
             using var snap = new SnapForm();
-            if (snap.ShowDialog() == DialogResult.OK && snap.CapturedImage != null)
+            if (snap.ShowDialog() == DialogResult.OK && snap.GetImage != null)
             {
-                var bytes = ImgMatch.Bmp2Bytes(snap.CapturedImage);
-                var data = new Config.PosData
+                byte[] bytes = ImgMatch.Bmp2Bytes(snap.GetImage);
+                Config.PosData data = new()
                 {
                     X = 0,
                     Y = 0,
@@ -558,12 +779,10 @@ public class Main : Form
                     ActKey = 0,
                     OpMode = 0,
                     WaitMs = 0,
-                    UseImageMatch = true,
-                    ImageTemplate = bytes,
+                    UseImage = true,
+                    ImageTemp = bytes,
                     Threshold = 0.8f
                 };
-                cfg.PosList.Add(data);
-                cfg.Save();
 
                 this.BeginInvoke(() =>
                 {
@@ -578,14 +797,16 @@ public class Main : Form
                         data.ModKey = NewEdit.NewModKey;
                         data.OpMode = NewEdit.NewOpMode;
                         data.WaitMs = NewEdit.NewWaitMs;
-                        data.UseImageMatch = NewEdit.NewUseImageMatch;
-                        data.ImageTemplate = NewEdit.NewImageTemplate;
+                        data.UseImage = NewEdit.NewUseImageMatch;
+                        data.ImageTemp = NewEdit.NewImageTemplate;
                         data.Threshold = NewEdit.NewThreshold;
+                        cfg.PosList.Add(data);
+                        cfg.Save();
                     }
                 });
             }
 
-            if (wasMinimized)
+            if (was)
             {
                 this.Show();
                 this.WindowState = FormWindowState.Normal;
@@ -597,8 +818,9 @@ public class Main : Form
             isSnapping = false;
         }
     }
+    #endregion
 
-    // ---- 配置保存/加载 ----
+    #region 脚本保存加载（配置文件额外备份）
     private void SaveSc()
     {
         using var sfd = new SaveFileDialog();
@@ -655,7 +877,8 @@ public class Main : Form
             }
             catch (Exception ex) { MessageBox.Show("加载失败: " + ex.Message); }
         }
-    }
+    } 
+    #endregion
 
     // ---- 热键回调 ----
     private void OnHotKey()
@@ -901,6 +1124,7 @@ public class Main : Form
         dlg.ShowDialog(this);
     }
 
+    #region 更新主窗口状态栏
     private void SetStat(string text)
     {
         if (stStat != null && !stStat.IsDisposed)
@@ -909,6 +1133,17 @@ public class Main : Form
             StatusChanged?.Invoke(text);
         }
     }
+
+    public void UpdateOcrStatus()
+    {
+        if (stOcr != null && !stOcr.IsDisposed)
+        {
+            bool loaded = OcrHelper.Engine != null;
+            stOcr.Text = loaded ? "ocr已加载" : "ocr未加载";
+            stOcr.ForeColor = loaded ? Color.Green : Color.Red;
+        }
+    } 
+    #endregion
 
     private void UpInfo()
     {
@@ -935,12 +1170,12 @@ public class Main : Form
             }
             else if (id == macroPlayHotId)
             {
-                TogglePlay();
+                SwitchPlay();
                 return;
             }
             else if (id == snapHotId)
             {
-                SnapAndAdd();
+                AddSnap();
                 return;
             }
             else if (id == timerHotId)

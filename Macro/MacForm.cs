@@ -9,8 +9,8 @@ namespace ClickHelper.Macro;
 public class MacForm : Form
 {
     // UI 控件
-    private ListBox lstFiles;   // 宏文件列表（上半）
-    private ListBox lstItems;   // 宏指令列表（下半）
+    private ListBox lstFiles;
+    private ListBox lstItems;
     private Button btnPlay, btnStopPlay, btnRec, btnStopRec, btnConv, btnEdit, btnDel, btnClear;
     private ComboBox cboRecHot, cboPlayHot;
     private Label lblStatus;
@@ -22,7 +22,7 @@ public class MacForm : Form
     private string curMacro;
     private int dragIdx = -1;
     private FileSystemWatcher watcher;
-    private Dictionary<string, string> fileMap;   // 新增
+    private Dictionary<string, string> fileMap;
 
     internal MacForm(Config config, Action onChanged, Main mainFormRef)
     {
@@ -34,9 +34,11 @@ public class MacForm : Form
         Text = "宏管理";
         Size = new Size(740, 480);
         StartPosition = FormStartPosition.CenterParent;
-        FormBorderStyle = FormBorderStyle.FixedSingle;
+        FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
+        MinimizeBox = false;
         KeyPreview = true;
+        BackColor = Color.FromArgb(240, 244, 248);  // 统一背景
         KeyDown += MacForm_KeyDown;
 
         // ---- 主布局 ----
@@ -58,35 +60,81 @@ public class MacForm : Form
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 3,
-            Padding = new Padding(0, 0, 8, 0)
+            Padding = new Padding(0, 0, 8, 0),
+            BackColor = Color.Transparent
         };
         leftPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 30));       // 宏文件列表占 30%
-        leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 70));       // 宏指令列表占 70%
+        leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 30));
+        leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 70));
 
         // 顶部操作按钮（新建/保存/加载/删除/清空列表）
         var top = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        var btnNew = new Button { Text = "新建", AutoSize = true };
+        var btnNew = new Button
+        {
+            Text = "新建",
+            AutoSize = true,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(0, 180, 255) },
+            BackColor = Color.FromArgb(225, 240, 255),
+            ForeColor = Color.FromArgb(0, 80, 180),
+            Font = new Font("微软雅黑", 9F)
+        };
         btnNew.Click += (s, e) => NewMac();
         tip.SetToolTip(btnNew, "创建新宏文件");
         top.Controls.Add(btnNew);
 
-        var btnLoad = new Button { Text = "加载", AutoSize = true };
+        var btnLoad = new Button
+        {
+            Text = "加载",
+            AutoSize = true,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 200, 200) },
+            BackColor = Color.FromArgb(225, 245, 245),
+            ForeColor = Color.FromArgb(0, 100, 120),
+            Font = new Font("微软雅黑", 9F)
+        };
         btnLoad.Click += (s, e) => LoadMac();
         tip.SetToolTip(btnLoad, "从外部加载宏文件");
         top.Controls.Add(btnLoad);
 
-        var btnSave = new Button { Text = "保存", AutoSize = true };
+        var btnSave = new Button
+        {
+            Text = "保存",
+            AutoSize = true,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 200, 100) },
+            BackColor = Color.FromArgb(230, 245, 230),
+            ForeColor = Color.FromArgb(0, 120, 0),
+            Font = new Font("微软雅黑", 9F)
+        };
         btnSave.Click += (s, e) => SaveMac();
         tip.SetToolTip(btnSave, "保存当前宏");
         top.Controls.Add(btnSave);
 
-        var btnDelMac = new Button { Text = "删除", AutoSize = true };
+        var btnDelMac = new Button
+        {
+            Text = "删除",
+            AutoSize = true,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(255, 150, 100) },
+            BackColor = Color.FromArgb(255, 235, 225),
+            ForeColor = Color.FromArgb(180, 60, 0),
+            Font = new Font("微软雅黑", 9F)
+        };
         btnDelMac.Click += (s, e) => DelMac();
         tip.SetToolTip(btnDelMac, "删除选中的宏文件");
         top.Controls.Add(btnDelMac);
 
-        var btnClrAll = new Button { Text = "清空列表", AutoSize = true };
+        var btnClrAll = new Button
+        {
+            Text = "清空列表",
+            AutoSize = true,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(180, 180, 180) },
+            BackColor = Color.FromArgb(240, 240, 240),
+            ForeColor = Color.FromArgb(80, 80, 80),
+            Font = new Font("微软雅黑", 9F)
+        };
         btnClrAll.Click += (s, e) => ClearAll();
         tip.SetToolTip(btnClrAll, "删除所有宏文件");
         top.Controls.Add(btnClrAll);
@@ -98,7 +146,9 @@ public class MacForm : Form
         {
             Dock = DockStyle.Fill,
             Font = new Font("微软雅黑", 9F),
-            IntegralHeight = false
+            IntegralHeight = false,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
         };
         lstFiles.SelectedIndexChanged += (s, e) => LoadItems();
         leftPanel.Controls.Add(lstFiles, 0, 1);
@@ -109,7 +159,9 @@ public class MacForm : Form
             Dock = DockStyle.Fill,
             Font = new Font("微软雅黑", 9F),
             IntegralHeight = false,
-            AllowDrop = true
+            AllowDrop = true,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
         };
         lstItems.DoubleClick += (s, e) => Edit();
         lstItems.MouseDown += OnLstMouseDown;
@@ -119,45 +171,49 @@ public class MacForm : Form
 
         mainLayout.Controls.Add(leftPanel, 0, 0);
 
-        // ---- 右侧面板（全新均匀布局） ----
+        // ---- 右侧面板 ----
         var rightPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 8,
-            Padding = new Padding(8, 0, 0, 0)
+            Padding = new Padding(8, 0, 0, 0),
+            BackColor = Color.Transparent
         };
-        // 所有行高度均匀分配（各 12.5%）
         for (int i = 0; i < 8; i++)
             rightPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5f));
-        // 列宽：第一列自适应标签，第二列占剩余
         rightPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         rightPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
         // ---- 行0：状态标签 ----
-        lblStatus = new Label { Text = "就绪", AutoSize = true, Font = new Font("微软雅黑", 9F, FontStyle.Bold), ForeColor = Color.Green };
+        lblStatus = new Label
+        {
+            Text = "就绪",
+            AutoSize = true,
+            Font = new Font("微软雅黑", 9F, FontStyle.Bold),
+            ForeColor = Color.Green,
+            Anchor = AnchorStyles.None
+        };
         rightPanel.Controls.Add(lblStatus, 0, 0);
         rightPanel.SetColumnSpan(lblStatus, 2);
-        // 居中
-        lblStatus.Anchor = AnchorStyles.None;
 
         // ---- 行1：录制 / 停录 ----
-        btnRec = new Button { Text = "录制", Width = 70, Height = 28, TextAlign = ContentAlignment.MiddleCenter };
-        btnStopRec = new Button { Text = "停录", Width = 70, Height = 28, Enabled = false, TextAlign = ContentAlignment.MiddleCenter };
+        btnRec = MakeButton("录制", Color.FromArgb(0, 180, 255), Color.FromArgb(225, 240, 255), Color.FromArgb(0, 80, 180));
+        btnStopRec = MakeButton("停录", Color.FromArgb(255, 100, 100), Color.FromArgb(255, 230, 230), Color.FromArgb(180, 0, 0));
+        btnStopRec.Enabled = false;
         tip.SetToolTip(btnRec, "开始录制宏（热键可切换）");
         tip.SetToolTip(btnStopRec, "停止录制");
-        // 放入一个 FlowLayoutPanel 使其居中
         var flow1 = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
         flow1.Controls.Add(btnRec);
         flow1.Controls.Add(btnStopRec);
-        // 居中调整：设置 FlowLayoutPanel 的 Padding 或使用布局事件
         flow1.Layout += (s, e) => CenterControls(flow1);
         rightPanel.Controls.Add(flow1, 0, 1);
         rightPanel.SetColumnSpan(flow1, 2);
 
         // ---- 行2：播放 / 停播 ----
-        btnPlay = new Button { Text = "播放", Width = 70, Height = 28, TextAlign = ContentAlignment.MiddleCenter };
-        btnStopPlay = new Button { Text = "停播", Width = 70, Height = 28, Enabled = false, TextAlign = ContentAlignment.MiddleCenter };
+        btnPlay = MakeButton("播放", Color.FromArgb(255, 180, 0), Color.FromArgb(255, 245, 225), Color.FromArgb(180, 100, 0));
+        btnStopPlay = MakeButton("停播", Color.FromArgb(255, 150, 100), Color.FromArgb(255, 235, 225), Color.FromArgb(180, 60, 0));
+        btnStopPlay.Enabled = false;
         tip.SetToolTip(btnPlay, "播放当前宏（热键可切换）");
         tip.SetToolTip(btnStopPlay, "停止播放");
         var flow2 = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
@@ -168,8 +224,8 @@ public class MacForm : Form
         rightPanel.SetColumnSpan(flow2, 2);
 
         // ---- 行3：转换 / 编辑 ----
-        btnConv = new Button { Text = "转换", Width = 70, Height = 28, TextAlign = ContentAlignment.MiddleCenter };
-        btnEdit = new Button { Text = "编辑", Width = 70, Height = 28, TextAlign = ContentAlignment.MiddleCenter };
+        btnConv = MakeButton("转换", Color.FromArgb(200, 150, 255), Color.FromArgb(240, 230, 255), Color.FromArgb(100, 50, 160));
+        btnEdit = MakeButton("编辑", Color.FromArgb(100, 200, 200), Color.FromArgb(225, 245, 245), Color.FromArgb(0, 100, 120));
         tip.SetToolTip(btnConv, "将宏转换为位置列表");
         tip.SetToolTip(btnEdit, "编辑选中的宏指令");
         var flow3 = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
@@ -180,8 +236,8 @@ public class MacForm : Form
         rightPanel.SetColumnSpan(flow3, 2);
 
         // ---- 行4：删除 / 清空 ----
-        btnDel = new Button { Text = "删行", Width = 70, Height = 28, TextAlign = ContentAlignment.MiddleCenter };
-        btnClear = new Button { Text = "清空", Width = 70, Height = 28, TextAlign = ContentAlignment.MiddleCenter };
+        btnDel = MakeButton("删行", Color.FromArgb(180, 180, 180), Color.FromArgb(240, 240, 240), Color.FromArgb(80, 80, 80));
+        btnClear = MakeButton("清空", Color.FromArgb(180, 180, 180), Color.FromArgb(240, 240, 240), Color.FromArgb(80, 80, 80));
         tip.SetToolTip(btnDel, "删除选中的宏指令");
         tip.SetToolTip(btnClear, "清空当前宏的所有指令");
         var flow4 = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
@@ -192,21 +248,56 @@ public class MacForm : Form
         rightPanel.SetColumnSpan(flow4, 2);
 
         // ---- 行5：热键设置标题 ----
-        var lblHot = new Label { Text = "热键设置:", AutoSize = true, Font = new Font("微软雅黑", 9F, FontStyle.Bold) };
+        var lblHot = new Label
+        {
+            Text = "热键设置:",
+            AutoSize = true,
+            Font = new Font("微软雅黑", 9F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(40, 60, 90),
+            Anchor = AnchorStyles.None
+        };
         rightPanel.Controls.Add(lblHot, 0, 5);
         rightPanel.SetColumnSpan(lblHot, 2);
-        lblHot.Anchor = AnchorStyles.None;
 
         // ---- 行6：录制切换标签 + 下拉 ----
-        rightPanel.Controls.Add(new Label { Text = "录制:", AutoSize = true, TextAlign = ContentAlignment.MiddleCenter }, 0, 6);
-        cboRecHot = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80, Anchor = AnchorStyles.Left };
+        rightPanel.Controls.Add(new Label
+        {
+            Text = "录制:",
+            AutoSize = true,
+            TextAlign = ContentAlignment.MiddleCenter,
+            ForeColor = Color.FromArgb(40, 60, 90),
+            Font = new Font("微软雅黑", 9F)
+        }, 0, 6);
+        cboRecHot = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 80,
+            Anchor = AnchorStyles.Left,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90),
+            Font = new Font("微软雅黑", 9F)
+        };
         rightPanel.Controls.Add(cboRecHot, 1, 6);
-        // 使下拉框左对齐
         cboRecHot.Anchor = AnchorStyles.Left;
 
         // ---- 行7：播放切换标签 + 下拉 ----
-        rightPanel.Controls.Add(new Label { Text = "播放:", AutoSize = true, TextAlign = ContentAlignment.MiddleCenter }, 0, 7);
-        cboPlayHot = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80, Anchor = AnchorStyles.Left };
+        rightPanel.Controls.Add(new Label
+        {
+            Text = "播放:",
+            AutoSize = true,
+            TextAlign = ContentAlignment.MiddleCenter,
+            ForeColor = Color.FromArgb(40, 60, 90),
+            Font = new Font("微软雅黑", 9F)
+        }, 0, 7);
+        cboPlayHot = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 80,
+            Anchor = AnchorStyles.Left,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90),
+            Font = new Font("微软雅黑", 9F)
+        };
         rightPanel.Controls.Add(cboPlayHot, 1, 7);
         cboPlayHot.Anchor = AnchorStyles.Left;
 
@@ -214,11 +305,11 @@ public class MacForm : Form
 
         Controls.Add(mainLayout);
 
-        // ---- 事件绑定 ----
+        // ---- 事件绑定（保持不变） ----
         btnRec.Click += (s, e) => { mainForm.ToglRecord(); UpdateButtons(); };
         btnStopRec.Click += (s, e) => { mainForm.ToglRecord(); UpdateButtons(); };
-        btnPlay.Click += (s, e) => { mainForm.TogglePlay(); UpdateButtons(); };
-        btnStopPlay.Click += (s, e) => { mainForm.TogglePlay(); UpdateButtons(); };
+        btnPlay.Click += (s, e) => { mainForm.SwitchPlay(); UpdateButtons(); };
+        btnStopPlay.Click += (s, e) => { mainForm.SwitchPlay(); UpdateButtons(); };
         btnConv.Click += (s, e) => ConvMac();
         btnEdit.Click += (s, e) => Edit();
         btnDel.Click += (s, e) => DelItem();
@@ -249,7 +340,23 @@ public class MacForm : Form
         };
     }
 
-    // ---- 辅助方法：使 FlowLayoutPanel 内的控件水平居中 ----
+    // ---- 辅助方法：创建统一风格的按钮 ----
+    private Button MakeButton(string text, Color border, Color back, Color fore)
+    {
+        return new Button
+        {
+            Text = text,
+            Width = 70,
+            Height = 28,
+            TextAlign = ContentAlignment.MiddleCenter,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = border },
+            BackColor = back,
+            ForeColor = fore,
+            Font = new Font("微软雅黑", 9F)
+        };
+    }
+
     private void CenterControls(FlowLayoutPanel panel)
     {
         if (panel.Controls.Count == 0) return;
@@ -295,7 +402,6 @@ public class MacForm : Form
         {
             if (oldName != null)
             {
-                // 根据旧文件名找到对应的显示文本
                 string newDisplay = null;
                 foreach (var kv in fileMap)
                 {
@@ -320,7 +426,6 @@ public class MacForm : Form
         }
     }
 
-    // ---- 清空所有宏文件 ----
     private void ClearAll()
     {
         if (lstFiles.Items.Count == 0)
@@ -348,35 +453,31 @@ public class MacForm : Form
             return;
         }
 
-        // 焦点在宏文件列表
         if (lstFiles.Focused)
         {
             if (e.KeyCode == Keys.Delete)
             {
-                DelMac();   // 删除当前选中的宏文件
+                DelMac();
                 e.Handled = true;
             }
-            // Ctrl+C 在文件列表无意义，不处理
             return;
         }
 
-        // 焦点在指令列表
         if (lstItems.Focused)
         {
             if (e.KeyCode == Keys.Delete)
             {
-                DelItem();  // 删除选中的指令
+                DelItem();
                 e.Handled = true;
             }
             else if (e.Control && e.KeyCode == Keys.C)
             {
-                CopyItem(); // 复制指令并插入（新增方法）
+                CopyItem();
                 e.Handled = true;
             }
         }
     }
 
-    // 复制项
     private void CopyItem()
     {
         if (curMacro == null) return;
@@ -386,7 +487,6 @@ public class MacForm : Form
         var data = MacIO.Load(curMacro);
         if (data == null || idx >= data.Items.Count) return;
 
-        // 复制选中的 MacItem
         var src = data.Items[idx];
         var copy = new MacItem
         {
@@ -395,10 +495,9 @@ public class MacForm : Form
             Y = src.Y,
             Key = src.Key,
             Delta = src.Delta,
-            Time = src.Time   // 时间相同，可后续手动调整
+            Time = src.Time
         };
 
-        // 插入到选中项之后
         int insertIdx = idx + 1;
         data.Items.Insert(insertIdx, copy);
         MacIO.Save(data);
@@ -682,7 +781,6 @@ public class MacForm : Form
 
     public void SelectMacroByName(string name)
     {
-        // 遍历 lstFiles.Items，查找显示文本对应的真实名称
         foreach (var item in lstFiles.Items)
         {
             string display = item.ToString();
@@ -693,7 +791,6 @@ public class MacForm : Form
                 return;
             }
         }
-        // 如果找不到，选择第一个
         if (lstFiles.Items.Count > 0)
             lstFiles.SelectedIndex = 0;
     }
@@ -720,50 +817,124 @@ public class MacForm : Form
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
+            BackColor = Color.FromArgb(240, 244, 248);
 
             var lay = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 RowCount = 6,
-                Padding = new Padding(10)
+                Padding = new Padding(10),
+                BackColor = Color.Transparent
             };
             lay.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
             lay.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-            lay.Controls.Add(new Label { Text = "动作:", AutoSize = true }, 0, 0);
-            cboAct = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120 };
+            lay.Controls.Add(new Label { Text = "动作:", AutoSize = true, Font = new Font("微软雅黑", 9F), ForeColor = Color.FromArgb(40, 60, 90) }, 0, 0);
+            cboAct = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 120,
+                BackColor = Color.White,
+                ForeColor = Color.FromArgb(30, 60, 90),
+                Font = new Font("微软雅黑", 9F)
+            };
             cboAct.Items.AddRange(new object[] { "移动", "左键按下", "左键弹起", "右键按下", "右键弹起", "中键按下", "中键弹起", "滚轮", "按键按下", "按键弹起" });
             cboAct.SelectedIndex = (int)item.Act;
             lay.Controls.Add(cboAct, 1, 0);
 
-            lay.Controls.Add(new Label { Text = "时间(ms):", AutoSize = true }, 0, 1);
-            numTime = new NumericUpDown { Minimum = 0, Maximum = 3600000, Value = item.Time, Width = 100 };
+            lay.Controls.Add(new Label { Text = "时间(ms):", AutoSize = true, Font = new Font("微软雅黑", 9F), ForeColor = Color.FromArgb(40, 60, 90) }, 0, 1);
+            numTime = new NumericUpDown
+            {
+                Minimum = 0,
+                Maximum = 3600000,
+                Value = item.Time,
+                Width = 100,
+                BackColor = Color.White,
+                ForeColor = Color.FromArgb(30, 60, 90),
+                Font = new Font("微软雅黑", 9F)
+            };
             lay.Controls.Add(numTime, 1, 1);
 
-            lblX = new Label { Text = "X:", AutoSize = true };
+            lblX = new Label { Text = "X:", AutoSize = true, Font = new Font("微软雅黑", 9F), ForeColor = Color.FromArgb(40, 60, 90) };
             lay.Controls.Add(lblX, 0, 2);
-            numX = new NumericUpDown { Minimum = -99999, Maximum = 99999, Value = item.X, Width = 100 };
+            numX = new NumericUpDown
+            {
+                Minimum = -99999,
+                Maximum = 99999,
+                Value = item.X,
+                Width = 100,
+                BackColor = Color.White,
+                ForeColor = Color.FromArgb(30, 60, 90),
+                Font = new Font("微软雅黑", 9F)
+            };
             lay.Controls.Add(numX, 1, 2);
 
-            lblY = new Label { Text = "Y:", AutoSize = true };
+            lblY = new Label { Text = "Y:", AutoSize = true, Font = new Font("微软雅黑", 9F), ForeColor = Color.FromArgb(40, 60, 90) };
             lay.Controls.Add(lblY, 0, 3);
-            numY = new NumericUpDown { Minimum = -99999, Maximum = 99999, Value = item.Y, Width = 100 };
+            numY = new NumericUpDown
+            {
+                Minimum = -99999,
+                Maximum = 99999,
+                Value = item.Y,
+                Width = 100,
+                BackColor = Color.White,
+                ForeColor = Color.FromArgb(30, 60, 90),
+                Font = new Font("微软雅黑", 9F)
+            };
             lay.Controls.Add(numY, 1, 3);
 
-            lblKey = new Label { Text = "键码:", AutoSize = true };
+            lblKey = new Label { Text = "键码:", AutoSize = true, Font = new Font("微软雅黑", 9F), ForeColor = Color.FromArgb(40, 60, 90) };
             lay.Controls.Add(lblKey, 0, 4);
-            numKey = new NumericUpDown { Minimum = 0, Maximum = 255, Value = item.Key, Width = 100 };
+            numKey = new NumericUpDown
+            {
+                Minimum = 0,
+                Maximum = 255,
+                Value = item.Key,
+                Width = 100,
+                BackColor = Color.White,
+                ForeColor = Color.FromArgb(30, 60, 90),
+                Font = new Font("微软雅黑", 9F)
+            };
             lay.Controls.Add(numKey, 1, 4);
 
-            lblDelta = new Label { Text = "增量:", AutoSize = true };
+            lblDelta = new Label { Text = "增量:", AutoSize = true, Font = new Font("微软雅黑", 9F), ForeColor = Color.FromArgb(40, 60, 90) };
             lay.Controls.Add(lblDelta, 0, 5);
-            numDelta = new NumericUpDown { Minimum = -1000, Maximum = 1000, Value = item.Delta, Width = 100 };
+            numDelta = new NumericUpDown
+            {
+                Minimum = -1000,
+                Maximum = 1000,
+                Value = item.Delta,
+                Width = 100,
+                BackColor = Color.White,
+                ForeColor = Color.FromArgb(30, 60, 90),
+                Font = new Font("微软雅黑", 9F)
+            };
             lay.Controls.Add(numDelta, 1, 5);
 
             var flowOk = new FlowLayoutPanel { FlowDirection = FlowDirection.RightToLeft, AutoSize = true, Dock = DockStyle.Bottom };
-            var btnOk = new Button { Text = "确定", DialogResult = DialogResult.OK, AutoSize = true };
-            var btnCancel = new Button { Text = "取消", DialogResult = DialogResult.Cancel, AutoSize = true };
+            var btnOk = new Button
+            {
+                Text = "确定",
+                DialogResult = DialogResult.OK,
+                AutoSize = true,
+                FlatStyle = FlatStyle.Flat,
+                FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(0, 180, 255) },
+                BackColor = Color.FromArgb(225, 240, 255),
+                ForeColor = Color.FromArgb(0, 80, 180),
+                Font = new Font("微软雅黑", 9F)
+            };
+            var btnCancel = new Button
+            {
+                Text = "取消",
+                DialogResult = DialogResult.Cancel,
+                AutoSize = true,
+                FlatStyle = FlatStyle.Flat,
+                FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(180, 180, 180) },
+                BackColor = Color.FromArgb(240, 240, 240),
+                ForeColor = Color.FromArgb(80, 80, 80),
+                Font = new Font("微软雅黑", 9F)
+            };
             flowOk.Controls.Add(btnOk);
             flowOk.Controls.Add(btnCancel);
             lay.Controls.Add(flowOk, 0, 6);

@@ -128,16 +128,16 @@ internal class Core
 
     private void Exec(Config.PosData pos)
     {
-        if (pos.UseImageMatch && pos.ImageTemplate != null && pos.ImageTemplate.Length > 0)
+        // ---- 图像匹配优先（如果启用） ----
+        if (pos.UseImage && pos.ImageTemp != null && pos.ImageTemp.Length > 0)
         {
-            var pt = ImgMatch.FindTemp(pos.ImageTemplate, pos.Threshold);
-            if (pt.HasValue)
-            {
-                MClick(pt.Value.X, pt.Value.Y, pos.ActKey, pos.OpMode);
-            }
+            var rect = ImgMatch.FindPoint(pos.ImageTemp, pos.Threshold);
+            if (rect.HasValue)
+                MClick(rect.Value.X, rect.Value.Y, pos.ActKey, pos.OpMode);
             return;
         }
 
+        // 普通坐标点击（记录的鼠标与键盘）
         if (pos.ActType == 0)
             MClick(pos.X, pos.Y, pos.ActKey, pos.OpMode);
         else if (pos.ActType == 1)
@@ -147,7 +147,7 @@ internal class Core
     // ---- 鼠标操作（统一调用 WinApi） ----
     private void MClick(int x, int y, int btn, int mode)
     {
-        Cursor.Position = new System.Drawing.Point(x, y);
+        Cursor.Position = new Point(x, y);
         if (btn == 0)
         {
             if (mode == 0 || mode == 1) WinApi.LeftDown();

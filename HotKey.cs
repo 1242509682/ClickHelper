@@ -32,8 +32,8 @@ internal class HotKey
 
     public void Unregister()
     {
-        UnregisterHotKey(hwnd, HOTKEY_F6);
-        UnregisterHotKey(hwnd, HOTKEY_ALT_L);
+        RegisterHotKey(hwnd, HOTKEY_F6);
+        RegisterHotKey(hwnd, HOTKEY_ALT_L);
     }
 
     public void UpdateKeys(int newF6, int newAlt)

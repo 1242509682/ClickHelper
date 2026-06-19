@@ -27,25 +27,45 @@ public class TimerForm : Form
         this.MaximizeBox = false;
         this.MinimizeBox = false;
         this.KeyPreview = true;
+        this.BackColor = Color.FromArgb(240, 244, 248);
         this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) this.Close(); };
 
+
+        // 主布局
         var lay = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 4,
-            Padding = new Padding(10)
+            Padding = new Padding(15, 12, 15, 12),
+            BackColor = Color.Transparent
         };
-        lay.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
+        lay.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 85));
         lay.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
         Font font = new Font("微软雅黑", 9F);
+        Font lblFont = new Font("微软雅黑", 9F, FontStyle.Bold);
         int row = 0;
 
         // 行0：定时热键
-        lay.Controls.Add(new Label { Text = "定时热键:", AutoSize = true, Font = font }, 0, row);
+        var lblHot = new Label
+        {
+            Text = "定时热键:",
+            AutoSize = true,
+            Font = lblFont,
+            ForeColor = Color.FromArgb(40, 60, 90),
+            Margin = new Padding(0, 6, 0, 0)
+        };
+        lay.Controls.Add(lblHot, 0, row);
         var flowHot = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        cboTimHot = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 100, Font = font };
+        cboTimHot = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 100,
+            Font = font,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
         var keys = WinApi.GetCommonKeys();
         cboTimHot.Items.AddRange(keys);
         if (cboTimHot.Items.Contains((Keys)cfg.TimerHotKey))
@@ -57,23 +77,73 @@ public class TimerForm : Form
         row++;
 
         // 行1：模式选择
-        lay.Controls.Add(new Label { Text = "定时模式:", AutoSize = true, Font = font }, 0, row);
+        var lblMode = new Label
+        {
+            Text = "定时模式:",
+            AutoSize = true,
+            Font = lblFont,
+            ForeColor = Color.FromArgb(40, 60, 90),
+            Margin = new Padding(0, 6, 0, 0)
+        };
+        lay.Controls.Add(lblMode, 0, row);
         var flowMode = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        rbDate = new RadioButton { Text = "日期模式", AutoSize = true, Font = font, Checked = (cfg.TimerMode == 0) };
-        rbTimer = new RadioButton { Text = "计时模式", AutoSize = true, Font = font, Checked = (cfg.TimerMode == 1) };
+        rbDate = new RadioButton
+        {
+            Text = "日期模式",
+            AutoSize = true,
+            Font = font,
+            Checked = (cfg.TimerMode == 0),
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
+        rbTimer = new RadioButton
+        {
+            Text = "计时模式",
+            AutoSize = true,
+            Font = font,
+            Checked = (cfg.TimerMode == 1),
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
         flowMode.Controls.Add(rbDate);
         flowMode.Controls.Add(rbTimer);
         lay.Controls.Add(flowMode, 1, row);
         row++;
 
         // 行2：日期/计时参数
-        lay.Controls.Add(new Label { Text = "时间参数:", AutoSize = true, Font = font }, 0, row);
+        var lblParam = new Label
+        {
+            Text = "时间参数:",
+            AutoSize = true,
+            Font = lblFont,
+            ForeColor = Color.FromArgb(40, 60, 90),
+            Margin = new Padding(0, 6, 0, 0)
+        };
+        lay.Controls.Add(lblParam, 0, row);
         var panParam = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
 
+        // ---- 日期模式面板 ----
         var panDate = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true };
+
         var panStart = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        dtpStart = new DateTimePicker { Format = DateTimePickerFormat.Custom, CustomFormat = "yyyy-MM-dd HH:mm:ss", Width = 220, Font = font, Value = cfg.TimerStart };
-        var btnNow = new Button { Text = "现在", AutoSize = true, Font = font };
+        dtpStart = new DateTimePicker
+        {
+            Format = DateTimePickerFormat.Custom,
+            CustomFormat = "yyyy-MM-dd HH:mm:ss",
+            Width = 220,
+            Font = font,
+            Value = cfg.TimerStart,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
+        var btnNow = new Button
+        {
+            Text = "现在",
+            AutoSize = true,
+            Font = font,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 180, 255) },
+            BackColor = Color.FromArgb(225, 240, 255),
+            ForeColor = Color.FromArgb(0, 80, 180)
+        };
         btnNow.Click += (s, e) => dtpStart.Value = DateTime.Now;
         panStart.Controls.Add(dtpStart);
         panStart.Controls.Add(btnNow);
@@ -81,23 +151,66 @@ public class TimerForm : Form
 
         var panEnd = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
         DateTime endVal = cfg.TimerEnd == DateTime.MinValue ? DateTime.Now.AddHours(1) : cfg.TimerEnd;
-        dtpEnd = new DateTimePicker { Format = DateTimePickerFormat.Custom, CustomFormat = "yyyy-MM-dd HH:mm:ss", Width = 220, Font = font, Value = endVal };
-        chkNoEnd = new CheckBox { Text = "无结束", AutoSize = true, Font = font };
-        chkNoEnd.Checked = cfg.TimerEnd == DateTime.MinValue;
+        dtpEnd = new DateTimePicker
+        {
+            Format = DateTimePickerFormat.Custom,
+            CustomFormat = "yyyy-MM-dd HH:mm:ss",
+            Width = 220,
+            Font = font,
+            Value = endVal,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
+        chkNoEnd = new CheckBox
+        {
+            Text = "无结束",
+            AutoSize = true,
+            Font = font,
+            Checked = cfg.TimerEnd == DateTime.MinValue,
+            ForeColor = Color.FromArgb(40, 60, 90)
+        };
         panEnd.Controls.Add(dtpEnd);
         panEnd.Controls.Add(chkNoEnd);
         panDate.Controls.Add(panEnd);
 
+        // ---- 计时模式面板 ----
         var panTimer = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        numHour = new NumericUpDown { Minimum = 0, Maximum = 23, Value = cfg.TimerDuration / 3600, Width = 50, Font = font };
-        numMin = new NumericUpDown { Minimum = 0, Maximum = 59, Value = (cfg.TimerDuration % 3600) / 60, Width = 50, Font = font };
-        numSec = new NumericUpDown { Minimum = 0, Maximum = 59, Value = cfg.TimerDuration % 60, Width = 50, Font = font };
+        numHour = new NumericUpDown
+        {
+            Minimum = 0,
+            Maximum = 23,
+            Value = cfg.TimerDuration / 3600,
+            Width = 50,
+            Font = font,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
+        numMin = new NumericUpDown
+        {
+            Minimum = 0,
+            Maximum = 59,
+            Value = (cfg.TimerDuration % 3600) / 60,
+            Width = 50,
+            Font = font,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
+        numSec = new NumericUpDown
+        {
+            Minimum = 0,
+            Maximum = 59,
+            Value = cfg.TimerDuration % 60,
+            Width = 50,
+            Font = font,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
         panTimer.Controls.Add(numHour);
-        panTimer.Controls.Add(new Label { Text = "时", AutoSize = true, Font = font });
+        panTimer.Controls.Add(new Label { Text = "时", AutoSize = true, Font = font, ForeColor = Color.DimGray });
         panTimer.Controls.Add(numMin);
-        panTimer.Controls.Add(new Label { Text = "分", AutoSize = true, Font = font });
+        panTimer.Controls.Add(new Label { Text = "分", AutoSize = true, Font = font, ForeColor = Color.DimGray });
         panTimer.Controls.Add(numSec);
-        panTimer.Controls.Add(new Label { Text = "秒", AutoSize = true, Font = font });
+        panTimer.Controls.Add(new Label { Text = "秒", AutoSize = true, Font = font, ForeColor = Color.DimGray });
 
         panParam.Controls.Add(panDate);
         panParam.Controls.Add(panTimer);
@@ -108,11 +221,40 @@ public class TimerForm : Form
         row++;
 
         // 行3：执行目标
-        lay.Controls.Add(new Label { Text = "执行目标:", AutoSize = true, Font = font }, 0, row);
+        var lblTarget = new Label
+        {
+            Text = "执行目标:",
+            AutoSize = true,
+            Font = lblFont,
+            ForeColor = Color.FromArgb(40, 60, 90),
+            Margin = new Padding(0, 6, 0, 0)
+        };
+        lay.Controls.Add(lblTarget, 0, row);
         var flowTarget = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        rbPos = new RadioButton { Text = "位置列表", AutoSize = true, Font = font, Checked = (cfg.TimeType == 0) };
-        rbMacro = new RadioButton { Text = "宏播放", AutoSize = true, Font = font, Checked = (cfg.TimeType == 1) };
-        cboMacros = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120, Font = font };
+        rbPos = new RadioButton
+        {
+            Text = "位置列表",
+            AutoSize = true,
+            Font = font,
+            Checked = (cfg.TimeType == 0),
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
+        rbMacro = new RadioButton
+        {
+            Text = "宏播放",
+            AutoSize = true,
+            Font = font,
+            Checked = (cfg.TimeType == 1),
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
+        cboMacros = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 120,
+            Font = font,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
+        };
         var names = Macro.MacIO.GetMacroNames();
         Array.Sort(names);
         cboMacros.Items.AddRange(names);
@@ -128,7 +270,7 @@ public class TimerForm : Form
 
         this.Controls.Add(lay);
 
-        // ---- 事件绑定 ----
+        // ---- 事件绑定（完全保留） ----
         rbDate.CheckedChanged += (s, e) => { panDate.Visible = rbDate.Checked; panTimer.Visible = !rbDate.Checked; SaveConfig(); };
         rbTimer.CheckedChanged += (s, e) => { panDate.Visible = !rbTimer.Checked; panTimer.Visible = rbTimer.Checked; SaveConfig(); };
 

@@ -7,7 +7,7 @@ namespace ClickHelper;
 /// <summary> 程序入口，版本号 </summary>
 internal static class Program
 {
-    public static string ver => "v1.0.2";
+    public static string ver => "v1.0.3";
 
     [STAThread]
     static void Main()

@@ -21,16 +21,16 @@ public static class ImgMatch
         return new Bitmap(ms);
     }
 
-    public static Point? FindTemp(byte[] tempData, float thresh = 0.8f)
+    public static Point? FindPoint(byte[] tempData, float thresh = 0.8f)
     {
         try
         {
             Cursor.Hide();
 
             // 1. 截取主屏幕（避免超过 ImageFinder 最大尺寸 2560x2560）
-            using var scrBmp = CaptureScr();       // 8 字符
+            using var scrBmp = CaptureScr();
             // 2. 模板图像
-            using var tplBmp = Bytes2Bmp(tempData); // 6 字符
+            using var tplBmp = Bytes2Bmp(tempData);
 
             if (tplBmp.Width > scrBmp.Width || tplBmp.Height > scrBmp.Height)
                 return null;
@@ -61,7 +61,7 @@ public static class ImgMatch
     private static Bitmap CaptureScr()
     {
         // 只截主屏幕，通常不超过 2560x2560，避免超限
-        var bounds = Screen.PrimaryScreen.Bounds;   // 6 字符
+        var bounds = Screen.PrimaryScreen.Bounds;
         var bmp = new Bitmap(bounds.Width, bounds.Height, PixelFormat.Format24bppRgb);
         using var g = Graphics.FromImage(bmp);
         g.CopyFromScreen(bounds.X, bounds.Y, 0, 0, bounds.Size);

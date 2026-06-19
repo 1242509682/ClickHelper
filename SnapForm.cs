@@ -8,7 +8,7 @@ namespace ClickHelper;
 /// <summary> 全屏截图窗体（仿QQ截图风格，支持调整选区） </summary>
 public class SnapForm : Form
 {
-    public Bitmap? CapturedImage { get; private set; }
+    public Bitmap? GetImage { get; private set; }
 
     private Bitmap scrBmp;
     private Point mPos;
@@ -188,22 +188,60 @@ public class SnapForm : Form
         }
         else if (e.KeyCode == Keys.Enter)
         {
-            ConfirmCapture();
+            Captured();
         }
         else if (e.KeyCode == Keys.C && !seling && !isResizing)
         {
             CopyColor();
         }
+        else if (e.KeyCode == Keys.B && !seling && !isResizing && selRect.Width > 5 && selRect.Height > 5)
+        {
+            DoOcr();
+            e.Handled = true;
+        }
     }
 
-    private void ConfirmCapture()
+    private void DoOcr()
+    {
+        if (OcrHelper.Engine == null)
+        {
+            // 调用 Init，如果成功则重新打开截图并继续识别
+            if (!OcrHelper.Init())
+            {
+                this.DialogResult = DialogResult.None;
+                this.Close();
+                return;
+            }
+
+            MessageBox.Show("OCR 文字识别引擎已加载完成..", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        // 引擎已存在，正常识别
+        string? text = OcrHelper.RecogRect(selRect);
+        if (string.IsNullOrEmpty(text))
+        {
+            MessageBox.Show("未识别到文字。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        using var edit = new OcrForm(text);
+        edit.TopMost = true;
+        if (edit.ShowDialog() == DialogResult.OK)
+        {
+            Clipboard.SetText(edit.FinalText);
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+    }
+
+    private void Captured()
     {
         if (selRect.Width > 5 && selRect.Height > 5)
         {
             using var bmp = new Bitmap(selRect.Width, selRect.Height);
             using (var g = Graphics.FromImage(bmp))
                 g.CopyFromScreen(selRect.X, selRect.Y, 0, 0, selRect.Size);
-            CapturedImage = new Bitmap(bmp);
+            GetImage = new Bitmap(bmp);
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
@@ -308,7 +346,8 @@ public class SnapForm : Form
     /// <summary> 绘制底部操作提示，若与选区重叠则隐藏 </summary>
     private void DrawBottomHint(Graphics g)
     {
-        string tipText = "按 Enter 确认   |   按 C 复制色号   |   右键/ESC 取消";
+        var ocrYes = OcrHelper.Engine != null ? "   按 B 识别文字   " : " 按 B 识别文字 (需加载) ";
+        string tipText = $"按 Enter 截图   |{ocrYes}|   按 C 复制色号   |   右键/ESC 取消";
         using var font = new Font("Segoe UI", 10, FontStyle.Regular);
         var sz = g.MeasureString(tipText, font);
         int textWidth = (int)sz.Width + 8;

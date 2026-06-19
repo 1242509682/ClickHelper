@@ -26,9 +26,12 @@ public class PosForm : Form
         this.Text = "位置列表编辑";
         this.Size = new Size(540, 420);
         this.StartPosition = FormStartPosition.CenterParent;
-        this.MinimumSize = new Size(480, 350);
-
+        this.FormBorderStyle = FormBorderStyle.FixedDialog;
+        this.MaximizeBox = false;
+        this.MinimizeBox = false;
         this.KeyPreview = true;
+        this.MinimumSize = new Size(480, 350);
+        this.BackColor = Color.FromArgb(240, 244, 248); // 统一背景
         this.KeyDown += OnFormKeyDown;
 
         var main = new TableLayoutPanel
@@ -36,7 +39,8 @@ public class PosForm : Form
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            Padding = new Padding(10)
+            Padding = new Padding(10),
+            BackColor = Color.Transparent
         };
         main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
         main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
@@ -46,7 +50,8 @@ public class PosForm : Form
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
-            Padding = new Padding(0)
+            Padding = new Padding(0),
+            BackColor = Color.Transparent
         };
         leftPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -56,7 +61,8 @@ public class PosForm : Form
             Text = "📋 位置列表",
             Font = new Font("微软雅黑", 10F, FontStyle.Bold),
             AutoSize = true,
-            Margin = new Padding(0, 0, 0, 4)
+            Margin = new Padding(0, 0, 0, 4),
+            ForeColor = Color.FromArgb(40, 60, 90)
         };
         leftPanel.Controls.Add(lblTitle, 0, 0);
 
@@ -65,7 +71,9 @@ public class PosForm : Form
             Dock = DockStyle.Fill,
             Font = new Font("微软雅黑", 9F),
             AllowDrop = true,
-            IntegralHeight = false
+            IntegralHeight = false,
+            BackColor = Color.White,
+            ForeColor = Color.FromArgb(30, 60, 90)
         };
         lst.DoubleClick += (s, e) => EditPos();
         lst.MouseDown += OnMouseDown;
@@ -80,7 +88,8 @@ public class PosForm : Form
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
-            Padding = new Padding(8, 0, 0, 0)
+            Padding = new Padding(8, 0, 0, 0),
+            BackColor = Color.Transparent
         };
         rightPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         rightPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -90,7 +99,8 @@ public class PosForm : Form
             Text = "⚙ 操作",
             Font = new Font("微软雅黑", 10F, FontStyle.Bold),
             AutoSize = true,
-            Margin = new Padding(0, 0, 0, 4)
+            Margin = new Padding(0, 0, 0, 4),
+            ForeColor = Color.FromArgb(40, 60, 90)
         };
         rightPanel.Controls.Add(lblOps, 0, 0);
 
@@ -100,7 +110,8 @@ public class PosForm : Form
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
             AutoSize = false,
-            Padding = new Padding(0, 10, 0, 0)
+            Padding = new Padding(0, 10, 0, 0),
+            BackColor = Color.Transparent
         };
         btnPanel.Layout += (s, e) =>
         {
@@ -117,12 +128,86 @@ public class PosForm : Form
         Font btnFont = new Font("微软雅黑", 9F);
         int btnWidth = 85;
         int btnHeight = 30;
-        btnUp = new Button { Text = "▲上移", Width = btnWidth, Height = btnHeight, Font = btnFont, TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 2, 0, 2) };
-        btnDown = new Button { Text = "▼下移", Width = btnWidth, Height = btnHeight, Font = btnFont, TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 2, 0, 2) };
-        btnEdit = new Button { Text = "✎编辑", Width = btnWidth, Height = btnHeight, Font = btnFont, TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 2, 0, 2) };
-        btnCopy = new Button { Text = "📋复制", Width = btnWidth, Height = btnHeight, Font = btnFont, TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 2, 0, 2) };
-        btnDel = new Button { Text = "✖删除", Width = btnWidth, Height = btnHeight, Font = btnFont, TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 2, 0, 2) };
-        btnClr = new Button { Text = "🗑清空", Width = btnWidth, Height = btnHeight, Font = btnFont, TextAlign = ContentAlignment.MiddleCenter, Margin = new Padding(0, 2, 0, 2) };
+
+        // 按钮统一扁平风格，不同功能配不同颜色
+        btnUp = new Button
+        {
+            Text = "▲上移",
+            Width = btnWidth,
+            Height = btnHeight,
+            Font = btnFont,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Margin = new Padding(0, 2, 0, 2),
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(0, 180, 255) },
+            BackColor = Color.FromArgb(225, 240, 255),
+            ForeColor = Color.FromArgb(0, 80, 180)
+        };
+        btnDown = new Button
+        {
+            Text = "▼下移",
+            Width = btnWidth,
+            Height = btnHeight,
+            Font = btnFont,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Margin = new Padding(0, 2, 0, 2),
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(0, 180, 255) },
+            BackColor = Color.FromArgb(225, 240, 255),
+            ForeColor = Color.FromArgb(0, 80, 180)
+        };
+        btnEdit = new Button
+        {
+            Text = "✎编辑",
+            Width = btnWidth,
+            Height = btnHeight,
+            Font = btnFont,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Margin = new Padding(0, 2, 0, 2),
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(255, 180, 0) },
+            BackColor = Color.FromArgb(255, 245, 225),
+            ForeColor = Color.FromArgb(180, 100, 0)
+        };
+        btnCopy = new Button
+        {
+            Text = "📋复制",
+            Width = btnWidth,
+            Height = btnHeight,
+            Font = btnFont,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Margin = new Padding(0, 2, 0, 2),
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 200, 200) },
+            BackColor = Color.FromArgb(225, 245, 245),
+            ForeColor = Color.FromArgb(0, 100, 120)
+        };
+        btnDel = new Button
+        {
+            Text = "✖删除",
+            Width = btnWidth,
+            Height = btnHeight,
+            Font = btnFont,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Margin = new Padding(0, 2, 0, 2),
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(255, 150, 100) },
+            BackColor = Color.FromArgb(255, 235, 225),
+            ForeColor = Color.FromArgb(180, 60, 0)
+        };
+        btnClr = new Button
+        {
+            Text = "🗑清空",
+            Width = btnWidth,
+            Height = btnHeight,
+            Font = btnFont,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Margin = new Padding(0, 2, 0, 2),
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(180, 180, 180) },
+            BackColor = Color.FromArgb(240, 240, 240),
+            ForeColor = Color.FromArgb(80, 80, 80)
+        };
 
         btnPanel.Controls.AddRange(new Control[] { btnUp, btnDown, btnEdit, btnCopy, btnDel, btnClr });
         rightPanel.Controls.Add(btnPanel, 0, 1);
@@ -130,6 +215,7 @@ public class PosForm : Form
         main.Controls.Add(rightPanel, 1, 0);
         this.Controls.Add(main);
 
+        // ---- 事件绑定（保持不变） ----
         btnUp.Click += (s, e) => MovePos(-1);
         btnDown.Click += (s, e) => MovePos(1);
         btnEdit.Click += (s, e) => EditPos();
@@ -146,6 +232,7 @@ public class PosForm : Form
         this.Resize += (s, e) => btnPanel.PerformLayout();
     }
 
+    // ---- 以下所有方法保持不变（只是样式已改） ----
     private void OnFormKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Escape)
@@ -284,8 +371,8 @@ public class PosForm : Form
             ModKey = src.ModKey,
             OpMode = src.OpMode,
             WaitMs = src.WaitMs,
-            UseImageMatch = src.UseImageMatch,
-            ImageTemplate = src.ImageTemplate,
+            UseImage = src.UseImage,
+            ImageTemp = src.ImageTemp,
             Threshold = src.Threshold
         };
         int insertIdx = idx + 1;
@@ -311,15 +398,15 @@ public class PosForm : Form
             pos.ModKey = dlg.NewModKey;
             pos.OpMode = dlg.NewOpMode;
             pos.WaitMs = dlg.NewWaitMs;
-            pos.UseImageMatch = dlg.NewUseImageMatch;
-            pos.ImageTemplate = dlg.NewImageTemplate;
+            pos.UseImage = dlg.NewUseImageMatch;
+            pos.ImageTemp = dlg.NewImageTemplate;
             pos.Threshold = dlg.NewThreshold;
             cfg.Save();
             LoadList();
         }
     }
 
-    // ---- 内部编辑对话框 ----
+    // ---- 内部编辑对话框（也美化） ----
     public class PosEdit : Form
     {
         public int NewX, NewY, NewActType, NewActKey, NewModKey, NewOpMode, NewWaitMs;
@@ -331,11 +418,11 @@ public class PosForm : Form
         private NumericUpDown numX, numY, numWait;
         private TextBox txtDesc;
         private ComboBox cboAct, cboMouse, cboKey, cboMod, cboMode;
-        private Button btnRec, btnScreenShot;
-        private PictureBox picTemplate;
+        private Button btnRec, btnScreenShot, btnOcr;
+        private PictureBox picTemp;
         private CheckBox chkUseImage;
         private NumericUpDown numThreshold;
-        private byte[]? currentTemplate;
+        private byte[]? curTemp;
 
         internal PosEdit(Config.PosData pos)
         {
@@ -344,108 +431,154 @@ public class PosForm : Form
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.KeyPreview = true;
+            this.BackColor = Color.FromArgb(240, 244, 248);
 
             var lay = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 RowCount = 10,
-                Padding = new Padding(8)
+                Padding = new Padding(8),
+                BackColor = Color.Transparent
             };
             lay.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
             lay.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
+            Font lblFont = new Font("微软雅黑", 9F);
+            Font ctrlFont = new Font("微软雅黑", 9F);
+            Color lblCol = Color.FromArgb(40, 60, 90);
+
             int row = 0;
-            lay.Controls.Add(new Label { Text = "名称:", AutoSize = true }, 0, row);
-            txtDesc = new TextBox { Text = pos.Desc ?? "", Dock = DockStyle.Fill };
+            lay.Controls.Add(new Label { Text = "名称:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            txtDesc = new TextBox { Text = pos.Desc ?? "", Dock = DockStyle.Fill, Font = ctrlFont, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
             lay.Controls.Add(txtDesc, 1, row++);
 
-            lay.Controls.Add(new Label { Text = "X:", AutoSize = true }, 0, row);
-            numX = new NumericUpDown { Minimum = -99999, Maximum = 99999, Value = pos.X, Width = 100 };
+            lay.Controls.Add(new Label { Text = "X:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            numX = new NumericUpDown { Minimum = -99999, Maximum = 99999, Value = pos.X, Width = 100, Font = ctrlFont, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
             lay.Controls.Add(numX, 1, row++);
 
-            lay.Controls.Add(new Label { Text = "Y:", AutoSize = true }, 0, row);
-            numY = new NumericUpDown { Minimum = -99999, Maximum = 99999, Value = pos.Y, Width = 100 };
+            lay.Controls.Add(new Label { Text = "Y:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            numY = new NumericUpDown { Minimum = -99999, Maximum = 99999, Value = pos.Y, Width = 100, Font = ctrlFont, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
             lay.Controls.Add(numY, 1, row++);
 
-            lay.Controls.Add(new Label { Text = "类型:", AutoSize = true }, 0, row);
-            cboAct = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 100 };
+            lay.Controls.Add(new Label { Text = "类型:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            cboAct = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 100, Font = ctrlFont, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
             cboAct.Items.AddRange(new object[] { "鼠标点击", "键盘按键" });
             cboAct.SelectedIndex = pos.ActType;
             lay.Controls.Add(cboAct, 1, row++);
 
-            lay.Controls.Add(new Label { Text = "按键:", AutoSize = true }, 0, row);
-            var pan = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-            cboMouse = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80 };
+            lay.Controls.Add(new Label { Text = "按键:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            var pan = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, BackColor = Color.Transparent };
+            cboMouse = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80, Font = ctrlFont, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
             cboMouse.Items.AddRange(new object[] { "左键", "中键", "右键" });
             cboMouse.SelectedIndex = pos.ActType == 0 ? pos.ActKey : 0;
-            cboKey = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80 };
+            cboKey = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80, Font = ctrlFont, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
             var keys = WinApi.GetCommonKeys();
             cboKey.Items.AddRange(keys);
             if (pos.ActType == 1 && cboKey.Items.Contains((Keys)pos.ActKey))
                 cboKey.SelectedItem = (Keys)pos.ActKey;
             else
                 cboKey.SelectedIndex = 0;
-            btnRec = new Button { Text = "录制", AutoSize = true };
+            btnRec = new Button
+            {
+                Text = "录制",
+                AutoSize = true,
+                FlatStyle = FlatStyle.Flat,
+                FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(200, 150, 255) },
+                BackColor = Color.FromArgb(240, 230, 255),
+                ForeColor = Color.FromArgb(100, 50, 160),
+                Font = ctrlFont
+            };
             pan.Controls.Add(cboMouse);
             pan.Controls.Add(cboKey);
             pan.Controls.Add(btnRec);
             lay.Controls.Add(pan, 1, row++);
 
-            lay.Controls.Add(new Label { Text = "修饰键:", AutoSize = true }, 0, row);
-            cboMod = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80 };
+            lay.Controls.Add(new Label { Text = "修饰键:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            cboMod = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80, Font = ctrlFont, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
             cboMod.Items.AddRange(new object[] { "无", "Ctrl", "Shift", "Alt" });
             cboMod.SelectedIndex = pos.ActType == 1 ? (pos.ModKey == 1 ? 1 : pos.ModKey == 2 ? 2 : pos.ModKey == 4 ? 3 : 0) : 0;
             lay.Controls.Add(cboMod, 1, row++);
 
-            lay.Controls.Add(new Label { Text = "模式:", AutoSize = true }, 0, row);
-            cboMode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80 };
+            lay.Controls.Add(new Label { Text = "模式:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            cboMode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80, Font = ctrlFont, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
             cboMode.Items.AddRange(new object[] { "单击", "按下", "弹起" });
             cboMode.SelectedIndex = pos.OpMode;
             lay.Controls.Add(cboMode, 1, row++);
 
-            lay.Controls.Add(new Label { Text = "延迟:", AutoSize = true }, 0, row);
-            numWait = new NumericUpDown { Minimum = 0, Maximum = 3600000, Value = pos.WaitMs, Width = 80 };
+            lay.Controls.Add(new Label { Text = "延迟:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            numWait = new NumericUpDown { Minimum = 0, Maximum = 3600000, Value = pos.WaitMs, Width = 80, Font = ctrlFont, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
             lay.Controls.Add(numWait, 1, row++);
 
             // ---- 图像匹配区域 ----
-            lay.Controls.Add(new Label { Text = "图匹配:", AutoSize = true }, 0, row);
-            var flowImg = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-            chkUseImage = new CheckBox { Text = "启用", AutoSize = true };
-            chkUseImage.Checked = pos.UseImageMatch;
-            btnScreenShot = new Button { Text = "重新截图", AutoSize = true };
+            lay.Controls.Add(new Label { Text = "图匹配:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            var flowImg = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, BackColor = Color.Transparent };
+            chkUseImage = new CheckBox { Text = "启用", AutoSize = true, Font = ctrlFont, ForeColor = Color.FromArgb(40, 60, 90) };
+            chkUseImage.Checked = pos.UseImage;
+            btnScreenShot = new Button
+            {
+                Text = "重新截图",
+                AutoSize = true,
+                FlatStyle = FlatStyle.Flat,
+                FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 200, 100) },
+                BackColor = Color.FromArgb(230, 245, 230),
+                ForeColor = Color.FromArgb(0, 120, 0),
+                Font = ctrlFont
+            };
             flowImg.Controls.Add(chkUseImage);
             flowImg.Controls.Add(btnScreenShot);
             lay.Controls.Add(flowImg, 1, row++);
 
-            lay.Controls.Add(new Label { Text = "阈值:", AutoSize = true }, 0, row);
-            numThreshold = new NumericUpDown { Minimum = 0, Maximum = 1, Increment = 0.05m, DecimalPlaces = 2, Value = (decimal)pos.Threshold, Width = 80 };
+            lay.Controls.Add(new Label { Text = "阈值:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            numThreshold = new NumericUpDown { Minimum = 0, Maximum = 1, Increment = 0.05m, DecimalPlaces = 2, Value = (decimal)pos.Threshold, Width = 80, Font = ctrlFont, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
             lay.Controls.Add(numThreshold, 1, row++);
 
-            lay.Controls.Add(new Label { Text = "预览:", AutoSize = true }, 0, row);
-            picTemplate = new PictureBox
+            lay.Controls.Add(new Label { Text = "预览:", AutoSize = true, Font = lblFont, ForeColor = lblCol }, 0, row);
+            picTemp = new PictureBox
             {
                 Size = new Size(120, 80),
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.LightGray,
                 SizeMode = PictureBoxSizeMode.Zoom
             };
-            picTemplate.Click += (s, e) =>
+            picTemp.Click += (s, e) =>
             {
-                if (currentTemplate == null || currentTemplate.Length == 0)
+                if (curTemp == null || curTemp.Length == 0)
                 {
                     MessageBox.Show("没有图像可预览", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
-                using var prev = new PrevForm(currentTemplate);
+                using var prev = new PrevForm(curTemp);
                 prev.ShowDialog(this);
             };
-            lay.Controls.Add(picTemplate, 1, row++);
+            lay.Controls.Add(picTemp, 1, row++);
 
             // 按钮行
-            var flowOk = new FlowLayoutPanel { FlowDirection = FlowDirection.RightToLeft, AutoSize = true, Dock = DockStyle.Bottom };
-            var btnOk = new Button { Text = "确定", DialogResult = DialogResult.OK, AutoSize = true };
-            var btnCancel = new Button { Text = "取消", DialogResult = DialogResult.Cancel, AutoSize = true };
+            var flowOk = new FlowLayoutPanel { FlowDirection = FlowDirection.RightToLeft, AutoSize = true, Dock = DockStyle.Bottom, BackColor = Color.Transparent };
+            var btnOk = new Button
+            {
+                Text = "确定",
+                DialogResult = DialogResult.OK,
+                AutoSize = true,
+                FlatStyle = FlatStyle.Flat,
+                FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(0, 180, 255) },
+                BackColor = Color.FromArgb(225, 240, 255),
+                ForeColor = Color.FromArgb(0, 80, 180),
+                Font = ctrlFont
+            };
+            var btnCancel = new Button
+            {
+                Text = "取消",
+                DialogResult = DialogResult.Cancel,
+                AutoSize = true,
+                FlatStyle = FlatStyle.Flat,
+                FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(180, 180, 180) },
+                BackColor = Color.FromArgb(240, 240, 240),
+                ForeColor = Color.FromArgb(80, 80, 80),
+                Font = ctrlFont
+            };
             flowOk.Controls.Add(btnOk);
             flowOk.Controls.Add(btnCancel);
             lay.Controls.Add(flowOk, 0, row);
@@ -456,11 +589,11 @@ public class PosForm : Form
             this.CancelButton = btnCancel;
 
             // 初始化模板显示
-            currentTemplate = pos.ImageTemplate;
-            if (currentTemplate != null && currentTemplate.Length > 0)
+            curTemp = pos.ImageTemp;
+            if (curTemp != null && curTemp.Length > 0)
             {
-                using var bmp = ImgMatch.Bytes2Bmp(currentTemplate);
-                picTemplate.Image = new Bitmap(bmp);
+                using var bmp = ImgMatch.Bytes2Bmp(curTemp);
+                picTemp.Image = new Bitmap(bmp);
             }
 
             void UpdateVis()
@@ -475,7 +608,7 @@ public class PosForm : Form
                 bool img = chkUseImage.Checked;
                 numThreshold.Enabled = img;
                 btnScreenShot.Enabled = img;
-                picTemplate.Enabled = img;
+                picTemp.Enabled = img;
                 numX.Enabled = !img;
                 numY.Enabled = !img;
             }
@@ -496,10 +629,10 @@ public class PosForm : Form
             btnScreenShot.Click += (s, e) =>
             {
                 using var snap = new SnapForm();
-                if (snap.ShowDialog() == DialogResult.OK && snap.CapturedImage != null)
+                if (snap.ShowDialog() == DialogResult.OK && snap.GetImage != null)
                 {
-                    currentTemplate = ImgMatch.Bmp2Bytes(snap.CapturedImage);
-                    picTemplate.Image = new Bitmap(snap.CapturedImage, new Size(120, 80));
+                    curTemp = ImgMatch.Bmp2Bytes(snap.GetImage);
+                    picTemp.Image = new Bitmap(snap.GetImage, new Size(120, 80));
                 }
             };
 
@@ -522,7 +655,7 @@ public class PosForm : Form
                 NewOpMode = cboMode.SelectedIndex;
                 NewWaitMs = (int)numWait.Value;
                 NewUseImageMatch = chkUseImage.Checked;
-                NewImageTemplate = currentTemplate;
+                NewImageTemplate = curTemp;
                 NewThreshold = (float)numThreshold.Value;
             };
         }
@@ -539,7 +672,8 @@ public class PosForm : Form
                 this.Size = new Size(250, 100);
                 this.StartPosition = FormStartPosition.CenterParent;
                 this.KeyPreview = true;
-                lbl = new Label { Text = "按下任意键...", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter };
+                this.BackColor = Color.FromArgb(240, 244, 248);
+                lbl = new Label { Text = "按下任意键...", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter, Font = new Font("微软雅黑", 9F), ForeColor = Color.FromArgb(40, 60, 90) };
                 this.Controls.Add(lbl);
                 this.Shown += (s, e) => { rec = true; };
                 this.KeyDown += (s, e) =>
@@ -565,6 +699,7 @@ public class PosForm : Form
                 this.Size = new Size(600, 500);
                 this.StartPosition = FormStartPosition.CenterParent;
                 this.KeyPreview = true;
+                this.BackColor = Color.FromArgb(240, 244, 248);
                 this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) this.Close(); };
                 this.Click += (s, e) => this.Close();
 

@@ -32,7 +32,7 @@ internal class WinApi
     public static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
     [DllImport("user32.dll")]
-    public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+    public static extern bool RegisterHotKey(IntPtr hWnd, int id);
 
     [DllImport("user32.dll")]
     public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
@@ -45,6 +45,9 @@ internal class WinApi
 
     [DllImport("user32.dll")]
     public static extern bool SetProcessDPIAware();
+
+    [DllImport("user32.dll")]
+    public static extern bool ReleaseCapture();
 
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT { public int X; public int Y; }
