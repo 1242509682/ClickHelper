@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace ClickHelper;
@@ -60,11 +61,30 @@ public class OcrForm : Form
             {
                 this.DialogResult = DialogResult.Cancel;
                 this.Close();
+
+                // ★ 停止时强制回收内存（释放未使用的托管对象）
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect(); // 回收可能提升到下一代的对象
                 e.Handled = true;
             }
         };
 
         // 点击复制按钮时保存文本
-        btnOk.Click += (s, e) => FinalText = txt.Text.Trim();
+        btnOk.Click += (s, e) =>
+        {
+            FinalText = txt.Text.Trim();
+            if (!string.IsNullOrEmpty(FinalText))
+            {
+                Clipboard.SetText(FinalText);
+
+                // ★ 停止时强制回收内存（释放未使用的托管对象）
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect(); // 回收可能提升到下一代的对象
+            }
+
+            this.DialogResult = DialogResult.OK;
+        };
     }
 }

@@ -2,7 +2,7 @@
 
 namespace ClickHelper.Macro;
 
-/// <summary> 宏转位置列表 </summary>
+/// <summary> 宏转坐标管理表 </summary>
 public static class MacConv
 {
     internal static List<Config.PosData> Convert(MacData data)

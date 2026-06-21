@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ClickHelper;
@@ -205,18 +206,24 @@ public class SnapForm : Form
     {
         if (OcrHelper.Engine == null)
         {
-            // 调用 Init，如果成功则重新打开截图并继续识别
-            if (!OcrHelper.Init())
+            Task.Run(() =>
             {
-                this.DialogResult = DialogResult.None;
-                this.Close();
-                return;
-            }
+                var ok = OcrHelper.Init();
+                this.Invoke(() =>
+                {
+                    if (!ok)
+                    {
+                        MessageBox.Show("OCR 未找到语言模型与依赖库请点击下载", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.DialogResult = DialogResult.None;
+                        this.Close();
+                        return;
+                    }
 
-            MessageBox.Show("OCR 文字识别引擎已加载完成..", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("OCR 文字识别引擎已加载完成..", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                });
+            });
         }
 
-        // 引擎已存在，正常识别
         string? text = OcrHelper.RecogRect(selRect);
         if (string.IsNullOrEmpty(text))
         {
@@ -224,11 +231,13 @@ public class SnapForm : Form
             return;
         }
 
+        // 截取选区图像作为模板
         using var edit = new OcrForm(text);
         edit.TopMost = true;
         if (edit.ShowDialog() == DialogResult.OK)
         {
-            Clipboard.SetText(edit.FinalText);
+            if (!string.IsNullOrEmpty(edit.FinalText))
+                Clipboard.SetText(edit.FinalText);
             this.DialogResult = DialogResult.OK;
             this.Close();
         }

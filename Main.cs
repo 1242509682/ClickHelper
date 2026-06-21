@@ -47,6 +47,8 @@ public class Main : Form
 
     // ---- 关于弹窗 ----
     private bool isAboutShowing = false;
+    // ---- 启用定时弹窗 ----
+    private bool isTogTimer = false;
 
     // ---- 定时热键 ----
     private int timerHotId = 203;
@@ -86,6 +88,8 @@ public class Main : Form
             UnTimerKey();
             tray!.Visible = false;
             tray.Dispose();
+            macroRec.Dispose();
+            macroPlay.Dispose();
             OcrHelper.Dispose(); // 卸载ocr引擎
             Application.Exit();
         };
@@ -100,7 +104,8 @@ public class Main : Form
             }
             isAboutShowing = false;
             this.CenterToScreen();
-            this.UpdateOcrStatus();   // 确保状态栏正确显示当前 OCR 状态
+            UpdateOcrStatus();
+            SetStat("空闲");
         };
 
         this.Resize += (s, e) =>
@@ -108,6 +113,20 @@ public class Main : Form
             if (this.WindowState == FormWindowState.Minimized && chkAutoMin.Checked)
             {
                 this.Hide();
+            }
+        };
+
+        // 订阅 OCR 错误事件
+        OcrHelper.OnError += (method, ex) =>
+        {
+            // 避免在非UI线程直接操作控件
+            if (this.InvokeRequired)
+            {
+                this.Invoke(() => OcrError(method, ex));
+            }
+            else
+            {
+                OcrError(method, ex);
             }
         };
 
@@ -158,6 +177,27 @@ public class Main : Form
             Location = new Point(10, 6)
         };
         titleBar.Controls.Add(lblTitle);
+
+        // ---- 关于按钮 ----
+        var btnAbout = new Button
+        {
+            Text = "?",
+            Font = new Font("微软雅黑", 9F, FontStyle.Bold),
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 0 },
+            ForeColor = Color.White,
+            BackColor = Color.Transparent,
+            Size = new Size(28, 28),
+            Location = new Point(this.Width - 90, 2)  // 在最小化按钮左侧
+        };
+        btnAbout.Click += (s, e) =>
+        {
+            using var about = new AboutForm(cfg);
+            about.ShowDialog(this);
+        };
+        btnAbout.MouseEnter += (s, e) => btnAbout.BackColor = Color.FromArgb(60, 120, 200);
+        btnAbout.MouseLeave += (s, e) => btnAbout.BackColor = Color.Transparent;
+        titleBar.Controls.Add(btnAbout);
 
         // 最小化按钮
         var btnMin = new Button
@@ -346,10 +386,10 @@ public class Main : Form
         flowSnap.Controls.Add(new Label { Text = "+ Alt", AutoSize = true, Font = font, ForeColor = Color.DimGray });
         main.Controls.Add(flowSnap, 1, row++);
 
-        // ---- 位置列表 ----
+        // ---- 坐标管理器 ----
         btnList = new Button
         {
-            Text = "位置列表",
+            Text = "坐标管理",
             AutoSize = true,
             Font = font,
             FlatStyle = FlatStyle.Flat,
@@ -703,7 +743,7 @@ public class Main : Form
         IsPlaying = false;
         macManual = true;
         SetStat("已停止");
-    } 
+    }
     #endregion
 
     // ---- 点击控制 ----
@@ -718,7 +758,7 @@ public class Main : Form
         }
         if (cfg.PosList.Count == 0)
         {
-            MessageBox.Show("位置列表为空");
+            MessageBox.Show("坐标管理列表为空");
             return;
         }
         manual = true;
@@ -735,6 +775,29 @@ public class Main : Form
         core.Stop();
         UpBtns();
         SetStat("空闲");
+
+        // ★ 停止时强制回收内存（释放未使用的托管对象）
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect(); // 回收可能提升到下一代的对象
+    }
+
+    private void OcrError(string method, Exception ex)
+    {
+        if (core.Running)
+        {
+            core.Stop();
+            UpBtns();
+            SetStat($"OCR错误已停止: {ex.Message}");
+
+            // 显示错误提示
+            MessageBox.Show($"OCR识别出错，已停止点击。\n方法：{method}\n错误：{ex.Message}",
+                            "OCR错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        else
+        {
+            SetStat($"OCR错误: {ex.Message}");
+        }
     }
 
     #region 获取鼠标坐标
@@ -770,6 +833,7 @@ public class Main : Form
             if (snap.ShowDialog() == DialogResult.OK && snap.GetImage != null)
             {
                 byte[] bytes = ImgMatch.Bmp2Bytes(snap.GetImage);
+
                 Config.PosData data = new()
                 {
                     X = 0,
@@ -781,12 +845,11 @@ public class Main : Form
                     WaitMs = 0,
                     UseImage = true,
                     ImageTemp = bytes,
-                    Threshold = 0.8f
                 };
 
                 this.BeginInvoke(() =>
                 {
-                    using var NewEdit = new PosForm.PosEdit(data);
+                    using var NewEdit = new PosEdit(data);
                     if (NewEdit.ShowDialog() == DialogResult.OK)
                     {
                         data.X = NewEdit.NewX;
@@ -797,9 +860,25 @@ public class Main : Form
                         data.ModKey = NewEdit.NewModKey;
                         data.OpMode = NewEdit.NewOpMode;
                         data.WaitMs = NewEdit.NewWaitMs;
+
+                        // ---- 图像匹配 ----
                         data.UseImage = NewEdit.NewUseImageMatch;
                         data.ImageTemp = NewEdit.NewImageTemplate;
                         data.Threshold = NewEdit.NewThreshold;
+
+                        // ★★★ 新增：文字匹配属性 ★★★
+                        data.UseTxt = NewEdit.NewUseTxt;
+                        data.TxtMatch = NewEdit.NewTxtMatch;
+                        data.TxtMode = NewEdit.NewTxtMode;
+                        data.TxtThresh = NewEdit.NewTxtThresh;
+
+                        // ★★★ 新增：UIA 属性 ★★★
+                        data.UseUIA = NewEdit.NewUseUIA;
+                        data.UIAProc = NewEdit.NewUIAProc;
+
+                        // ★★★ 新增：文本输入 / 组合键内容 ★★★
+                        data.TextContent = NewEdit.NewTextContent;
+                        data.ComboKeys = NewEdit.NewComboKeys;
                         cfg.PosList.Add(data);
                         cfg.Save();
                     }
@@ -875,9 +954,13 @@ public class Main : Form
                 if (cfg.TimerEnabled) tCheck.Start(); else tCheck.Stop();
                 MessageBox.Show("配置加载成功");
             }
-            catch (Exception ex) { MessageBox.Show("加载失败: " + ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("加载失败: " + ex.Message);
+                Logger.Log(ex, "LoadSc");
+            }
         }
-    } 
+    }
     #endregion
 
     // ---- 热键回调 ----
@@ -960,7 +1043,7 @@ public class Main : Form
                 if (isSnapping || IsRecording || IsPlaying) return;
                 if (cfg.PosLoopCount == 0 || cfg.PosList.Count == 0)
                 {
-                    SetStat("位置列表为空或循环0，跳过");
+                    SetStat("坐标管理表为空或循环0，跳过");
                     return;
                 }
                 core.Start();
@@ -1018,29 +1101,38 @@ public class Main : Form
     // ---- 定时热键切换 ----
     private void TogTimer()
     {
-        if (cfg.TimerEnabled)
+        if (isTogTimer) return;
+        isTogTimer = true;
+        try
         {
-            StopTim();
-        }
-        else
-        {
-            string info = GetTimInfo();
-            if (info.StartsWith("无") || info.StartsWith("宏为空"))
+            if (cfg.TimerEnabled)
             {
-                MessageBox.Show(info, "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                StopTim();
             }
+            else
+            {
+                string info = GetTimInfo();
+                if (info.StartsWith("无") || info.StartsWith("宏为空"))
+                {
+                    MessageBox.Show(info, "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
-            string hotKey = ((Keys)cfg.TimerHotKey).ToString();
-            string msg = $"{info}\n\n按 {hotKey} 可停止定时。";
-            if (MessageBox.Show(msg, "启用定时", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-            {
-                cfg.TimerEnabled = true;
-                cfg.Save();
-                timStart = DateTime.Now;
-                tCheck.Start();
-                SetStat("定时已启用");
+                string hotKey = ((Keys)cfg.TimerHotKey).ToString();
+                string msg = $"{info}\n\n按 {hotKey} 可停止定时。";
+                if (MessageBox.Show(msg, "启用定时", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    cfg.TimerEnabled = true;
+                    cfg.Save();
+                    timStart = DateTime.Now;
+                    tCheck.Start();
+                    SetStat("定时已启用");
+                }
             }
+        }
+        finally
+        {
+            isTogTimer = false;
         }
     }
 
@@ -1054,7 +1146,7 @@ public class Main : Form
 
         if (cfg.TimeType == 0)
         {
-            tgtInfo = "执行目标：位置列表";
+            tgtInfo = "执行目标：坐标表";
             int cnt = cfg.PosList.Count;
             int wait = 0;
             foreach (var p in cfg.PosList)
@@ -1115,6 +1207,11 @@ public class Main : Form
         }
 
         SetStat("定时已禁用");
+
+        // ★ 停止时强制回收内存（释放未使用的托管对象）
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect(); // 回收可能提升到下一代的对象
     }
 
     // ---- 其他辅助 ----
@@ -1125,7 +1222,7 @@ public class Main : Form
     }
 
     #region 更新主窗口状态栏
-    private void SetStat(string text)
+    public void SetStat(string text)
     {
         if (stStat != null && !stStat.IsDisposed)
         {
@@ -1142,7 +1239,7 @@ public class Main : Form
             stOcr.Text = loaded ? "ocr已加载" : "ocr未加载";
             stOcr.ForeColor = loaded ? Color.Green : Color.Red;
         }
-    } 
+    }
     #endregion
 
     private void UpInfo()

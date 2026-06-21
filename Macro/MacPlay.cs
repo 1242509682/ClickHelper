@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using static ClickHelper.WinApi;
 
 namespace ClickHelper.Macro;
@@ -91,8 +92,15 @@ public class MacPlay
             case MacAction.MDown: MiddleDown(); break;
             case MacAction.MUp: MiddleUp(); break;
             case MacAction.Wheel: Wheel(it.Delta); break;
-            case MacAction.KDown: KeyDown((System.Windows.Forms.Keys)it.Key); break;
-            case MacAction.KUp: KeyUp((System.Windows.Forms.Keys)it.Key); break;
+            case MacAction.KDown: FlaUIHelper.PressKey((Keys)it.Key); break;
+            case MacAction.KUp: FlaUIHelper.ReleaseKey((Keys)it.Key); break;
         }
+    }
+
+    public void Dispose()
+    {
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = null;
     }
 }

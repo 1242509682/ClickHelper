@@ -144,17 +144,37 @@ internal class WinApi
         public IntPtr dwExtraInfo;
     }
 
+    // ---- 窗口枚举与信息 ----
+    public delegate bool EnumWinProc(IntPtr hWnd, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumWindows(EnumWinProc lpEnumFunc, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsWindowVisible(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int count);
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint procId);
+
+    // ---- 坐标转换 ----
+    [DllImport("user32.dll")]
+    public static extern bool ScreenToClient(IntPtr hWnd, ref POINT pt);
+
     // ---- 工具方法：生成常用的热键列表（供下拉框使用） ----
     public static object[] GetCommonKeys()
     {
-        return new object[] {
+        return 
+        [
             Keys.F1, Keys.F2, Keys.F3, Keys.F4, Keys.F5, Keys.F6, Keys.F7, Keys.F8,
             Keys.F9, Keys.F10, Keys.F11, Keys.F12,
             Keys.D0, Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9,
             Keys.A, Keys.B, Keys.C, Keys.D, Keys.E, Keys.F, Keys.G, Keys.H, Keys.I, Keys.J,
             Keys.K, Keys.L, Keys.M, Keys.N, Keys.O, Keys.P, Keys.Q, Keys.R, Keys.S, Keys.T,
             Keys.U, Keys.V, Keys.W, Keys.X, Keys.Y, Keys.Z
-        };
+        ];
     }
 
     public static IntPtr MakeLParam(int x, int y) => (IntPtr)((y << 16) | (x & 0xFFFF));

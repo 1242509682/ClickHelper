@@ -226,7 +226,7 @@ public class MacForm : Form
         // ---- 行3：转换 / 编辑 ----
         btnConv = MakeButton("转换", Color.FromArgb(200, 150, 255), Color.FromArgb(240, 230, 255), Color.FromArgb(100, 50, 160));
         btnEdit = MakeButton("编辑", Color.FromArgb(100, 200, 200), Color.FromArgb(225, 245, 245), Color.FromArgb(0, 100, 120));
-        tip.SetToolTip(btnConv, "将宏转换为位置列表");
+        tip.SetToolTip(btnConv, "将宏转换为坐标管理表");
         tip.SetToolTip(btnEdit, "编辑选中的宏指令");
         var flow3 = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
         flow3.Controls.Add(btnConv);
@@ -747,7 +747,7 @@ public class MacForm : Form
         cfg.PosList.AddRange(list);
         cfg.Save();
         changed?.Invoke();
-        MessageBox.Show($"已转换 {list.Count} 个宏到《位置列表》");
+        MessageBox.Show($"已转换 {list.Count} 个宏到《坐标管理表》");
     }
 
     private void DelItem()

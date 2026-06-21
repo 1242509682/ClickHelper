@@ -4,11 +4,11 @@ using System.Windows.Forms;
 
 namespace ClickHelper;
 
-public class AskForm : Form
+public class MissingCvForm : Form
 {
-    public AskForm()
+    public MissingCvForm()
     {
-        this.Text = "依赖与语言模型下载";
+        this.Text = "图像处理依赖缺失";
         this.Size = new Size(480, 210);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -33,16 +33,16 @@ public class AskForm : Form
         // 第一行：提示文字
         var lbl = new Label
         {
-            Text = "检测到缺少OCR核心文件!\n请下载后解压到本程序根目录",
+            Text = "检测到缺少截图功能核心文件!\n请下载后解压到本程序根目录",
             AutoSize = true,
             Font = new Font("微软雅黑", 9F)
         };
         lay.Controls.Add(lbl, 0, 0);
 
-        // 第二行：可点击链接（显示模型名称）
+        // 第二行：可点击链接
         var link = new LinkLabel
         {
-            Text = "PaddleOCR v6 依赖+语言模型",
+            Text = "OpenCvSharp v4.13 图像处理库",
             AutoSize = true,
             Font = new Font("微软雅黑", 9F, FontStyle.Underline),
             LinkColor = Color.Blue
@@ -51,7 +51,7 @@ public class AskForm : Form
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = OcrHelper.DownloadUrl,
+                FileName = "https://share.weiyun.com/UtQQgn1I",
                 UseShellExecute = true
             });
         };
@@ -60,7 +60,7 @@ public class AskForm : Form
         // 第三行：压缩包名称
         var zipName = new Label
         {
-            Text = "压缩包：PaddleOCR v6 依赖+语言模型.zip",
+            Text = "OpenCvSharp v4.13 图像处理库.zip",
             AutoSize = true,
             Font = new Font("微软雅黑", 8F),
             ForeColor = Color.DimGray
@@ -70,14 +70,14 @@ public class AskForm : Form
         // 第四行：大小信息
         var sizeInfo = new Label
         {
-            Text = "压缩包 123 MB | 解压 350 MB | 需 480 MB 空间",
+            Text = "压缩包 25.2 MB | 解压 66.1 MB | 总计 81.3 MB",
             AutoSize = true,
             Font = new Font("微软雅黑", 8F),
             ForeColor = Color.Gray
         };
         lay.Controls.Add(sizeInfo, 0, 3);
 
-        // 第五行：按钮（从左到右排列）
+        // 第五行：按钮
         var flow = new FlowLayoutPanel
         {
             FlowDirection = FlowDirection.LeftToRight,
@@ -100,12 +100,12 @@ public class AskForm : Form
         this.AcceptButton = btnDownload;
         this.CancelButton = btnCancel;
 
-        // 下载：打开浏览器并关闭窗口
+        // 下载：打开链接并关闭窗口
         btnDownload.Click += (s, e) =>
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = OcrHelper.DownloadUrl,
+                FileName = "https://share.weiyun.com/UtQQgn1I",
                 UseShellExecute = true
             });
             this.DialogResult = DialogResult.Cancel;

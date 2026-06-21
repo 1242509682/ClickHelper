@@ -233,7 +233,7 @@ public class TimerForm : Form
         var flowTarget = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
         rbPos = new RadioButton
         {
-            Text = "位置列表",
+            Text = "坐标表",
             AutoSize = true,
             Font = font,
             Checked = (cfg.TimeType == 0),
