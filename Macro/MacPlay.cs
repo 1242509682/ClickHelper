@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using static ClickHelper.WinApi;
 
-namespace ClickHelper.Macro;
+namespace ClickHelper;
 
 /// <summary> 宏回放引擎 </summary>
 public class MacPlay

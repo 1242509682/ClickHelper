@@ -4,7 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 
-namespace ClickHelper.Macro;
+namespace ClickHelper;
 
 public class MacForm : Form
 {

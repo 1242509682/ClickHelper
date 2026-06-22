@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ClickHelper.Macro;
+namespace ClickHelper;
 
 /// <summary> 宏转坐标管理表 </summary>
 public static class MacConv
@@ -28,7 +28,12 @@ public static class MacConv
                     ActType = 0,
                     ActKey = btn,
                     OpMode = mode,
-                    WaitMs = wait
+                    WaitMs = wait,
+                    Targets = new List<string>(),   // 空列表
+                    UseUIA = false,
+                    AutoId = null,
+                    UName = null,
+                    ClassN = null
                 });
                 prev = it.Time;
             }
@@ -43,7 +48,12 @@ public static class MacConv
                     ActKey = it.Key,
                     ModKey = 0,
                     OpMode = mode,
-                    WaitMs = wait
+                    WaitMs = wait,
+                    Targets = new List<string>(),   // 空列表
+                    UseUIA = false,
+                    AutoId = null,
+                    UName = null,
+                    ClassN = null
                 });
                 prev = it.Time;
             }

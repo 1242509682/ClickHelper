@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ClickHelper.Macro;
+namespace ClickHelper;
 
 /// <summary> 宏动作类型 </summary>
 public enum MacAction

@@ -4,14 +4,16 @@ using System.Windows.Forms;
 
 namespace ClickHelper;
 
-/// <summary> 程序入口，版本号 </summary>
+/// <summary> 程序入口 </summary>
 internal static class Program
 {
+    // 版本号
     public static string ver => "v1.0.4";
 
     [STAThread]
     static void Main()
     {
+
         // 确保程序只启动一个实例
         bool createdNew;
         using Mutex mutex = new Mutex(true, "ClickHelper_SingleInstance_Mutex", out createdNew);

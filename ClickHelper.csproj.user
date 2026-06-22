@@ -5,13 +5,16 @@
     <Compile Update="AboutForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="AnimForm.cs">
+    <Compile Update="Anim\AnimForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="AnimPanel.cs">
+    <Compile Update="Anim\AnimPanel.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="AskForm.cs">
+    <Compile Update="DownLoad\AskForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Input\RecordKey.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="Macro\MacForm.cs">
@@ -20,34 +23,31 @@
     <Compile Update="Main.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="MissingCvForm.cs">
+    <Compile Update="DownLoad\MissingCvForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="OcrForm.cs">
+    <Compile Update="Ocr\OcrForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="PickForm.cs">
+    <Compile Update="PosFunc\PickForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="PosEdit.cs">
+    <Compile Update="PosFunc\PosEdit.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="PosForm.cs">
+    <Compile Update="PosFunc\PosForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="PrevForm.cs">
+    <Compile Update="Snap\PrevForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="RecordKey.cs">
+    <Compile Update="Snap\SnapForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="SnapForm.cs">
+    <Compile Update="TimerFunc\TimerForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="TimerForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="WinPick.cs">
+    <Compile Update="UIA\WinPick.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

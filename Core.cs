@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using FlaUI.Core.Conditions;
 using Point = System.Drawing.Point;
 using Timer = System.Windows.Forms.Timer;
 
@@ -12,6 +13,7 @@ namespace ClickHelper;
 /// <summary> 点击核心 </summary>
 internal class Core
 {
+    #region 字段与属性
     private Timer tmr;
     private Timer dTmr;
     private Config cfg;
@@ -19,14 +21,17 @@ internal class Core
     private bool run;
     private bool delay;
     private object lck = new();
-    public int CurIdx => idx;
-    public bool Running => run;
     private Task? simulTask;
     private CancellationTokenSource? simulCts;
     private bool isBatchRunning = false;
-    public event Action? Stopped;
     private static bool cvMissingShown = false;
 
+    public int CurIdx => idx;
+    public bool Running => run;
+    public event Action? Stopped;
+    #endregion
+
+    #region 构造与初始化
     public Core(Config config)
     {
         cfg = config;
@@ -38,14 +43,17 @@ internal class Core
         run = false;
         delay = false;
     }
+    #endregion
 
+    #region 启动/停止控制
     public void Start()
     {
         lock (lck)
         {
             if (run) return;
 
-            cvMissingShown = false;   // 每次启动重置，确保下次启动仍会检测
+            // 每次启动重置，确保下次启动仍会检测
+            cvMissingShown = false;  
 
             if (cfg.SimulExec)
             {
@@ -117,7 +125,9 @@ internal class Core
         tmr.Interval = Math.Max(1, ms);
         cfg.IntervalMs = ms;
     }
+    #endregion
 
+    #region 定时器回调与步进
     private void Tick(object? sender, EventArgs e) => Next();
     private void DTick(object? sender, EventArgs e)
     {
@@ -158,13 +168,15 @@ internal class Core
             idx++;
         }
     }
+    #endregion
 
+    #region 执行逻辑（Exec + 图像/文字匹配）
     private void Exec(Config.PosData pos)
     {
         // ---- 文字匹配 + 图像匹配 ----
         if (pos.ImageTemp != null && pos.ImageTemp.Length > 0)
         {
-            if (!CvCheck.IsReady())
+            if (!Check.IsReady())
             {
                 if (!cvMissingShown)
                 {
@@ -177,8 +189,23 @@ internal class Core
 
             if (!pos.UseImage) return;
 
-                var rect = ImgMatch.FindPoint(pos.ImageTemp, pos.Threshold);
+            var rect = ImgMatch.FindPoint(pos.ImageTemp, pos.Threshold);
             if (!rect.HasValue) return;
+
+            // 截图匹配成功后，若操作类型为文本输入，则走 UIA 输入路径
+            if (pos.ActType == 2 && !string.IsNullOrEmpty(pos.TextContent))
+            {
+                var elem = FlaUIHelper.GetElemPt(rect.Value.X, rect.Value.Y);
+                if (elem != null && FlaUIHelper.SetTxtElem(elem, pos.TextContent))
+                    return;
+                // 若元素不支持直接设置，则尝试向上查找可输入父级
+                var parent = elem?.FindFirst(FlaUI.Core.Definitions.TreeScope.Ancestors, TrueCondition.Default);
+                if (parent != null && FlaUIHelper.SetTxtElem(parent, pos.TextContent))
+                    return;
+                // 最后回退全局键盘输入
+                FlaUIHelper.TypeText(pos.TextContent);
+                return;
+            }
 
             if (pos.UseTxt && !string.IsNullOrEmpty(pos.TxtMatch))
             {
@@ -187,7 +214,6 @@ internal class Core
                     return; // 模板无效则放弃
 
                 int w = tempBmp.Width, h = tempBmp.Height;
-
                 var rect2 = new Rectangle(rect.Value.X - w / 2, rect.Value.Y - h / 2, w, h);
                 var blocks = OcrHelper.GetText(rect2);
                 if (blocks != null)
@@ -201,7 +227,7 @@ internal class Core
                             // 获取文字坐标 + 偏移
                             int cx = (int)pts.Average(p => p.X) + rect2.X;
                             int cy = (int)pts.Average(p => p.Y) + rect2.Y;
-                            MClick(cx, cy, pos.ActKey, pos.OpMode, pos.UseUIA, pos.UIAProc);
+                            MClick(cx, cy, pos);
                             return;
                         }
                     }
@@ -210,24 +236,18 @@ internal class Core
             else
             {
                 // ---- 图像匹配 ----
-                MClick(rect.Value.X, rect.Value.Y, pos.ActKey, pos.OpMode, pos.UseUIA, pos.UIAProc);
+                MClick(rect.Value.X, rect.Value.Y, pos);
             }
             return;
         }
 
-        // ---- 普通坐标操作 / 键盘 / 文本 / 组合键 ----
+        // ---- 普通坐标 / 键盘 / 文本 / 组合键 ----
         switch (pos.ActType)
         {
             case 0: // 鼠标点击
-                int clickX = pos.X;
-                int clickY = pos.Y;
-                // 若坐标为 (0,0)，则使用当前鼠标位置
-                if (clickX == 0 && clickY == 0)
-                {
-                    clickX = Cursor.Position.X;
-                    clickY = Cursor.Position.Y;
-                }
-                MClick(clickX, clickY, pos.ActKey, pos.OpMode, pos.UseUIA, pos.UIAProc);
+                int clickX = pos.X == 0 && pos.Y == 0 ? Cursor.Position.X : pos.X;
+                int clickY = pos.X == 0 && pos.Y == 0 ? Cursor.Position.Y : pos.Y;
+                MClick(clickX, clickY, pos);
                 break;
 
             case 1: // 键盘按键
@@ -236,7 +256,23 @@ internal class Core
 
             case 2: // 文本输入
                 if (!string.IsNullOrEmpty(pos.TextContent))
-                    FlaUIHelper.TypeText(pos.TextContent);
+                {
+                    // 优先 UIA 定位输入
+                    if (pos.UseUIA && pos.Targets.Count > 0)
+                    {
+                        bool done = false;
+                        // 尝试直接通过属性查找编辑框
+                        foreach (var t in pos.Targets)
+                        {
+                            if (FlaUIHelper.SetTxtProp(t, pos.AutoId, pos.UName, pos.ClassN, pos.TextContent))
+                            { done = true; break; }
+                        }
+                        if (!done)
+                            FlaUIHelper.TypeText(pos.TextContent); // 回退全局键盘
+                    }
+                    else
+                        FlaUIHelper.TypeText(pos.TextContent);
+                }
                 break;
 
             case 3: // 组合键
@@ -247,49 +283,48 @@ internal class Core
                         FlaUIHelper.TypeSimultaneously(keys.ToArray());
                 }
                 break;
-            default:
-                break;
         }
     }
+    #endregion
 
-    // ---- 鼠标操作（集成 UIA） ----
-    private void MClick(int x, int y, int btn, int mode, bool useUIA, string uiaProc)
+    #region 鼠标/键盘操作
+    private void MClick(int x, int y, Config.PosData pos)
     {
-        bool clicked = false;
-
-        // 1. 尝试 UIA（仅单击模式）
-        if (useUIA && mode == 0)
+        if (pos.Targets != null && pos.Targets.Count > 0)
         {
-            bool flag = btn switch
+            var handles = WinApi.GetHandles(pos.Targets);
+            foreach (var hwnd in handles)
             {
-                0 => FlaUIHelper.ClickAt(x, y, 0, uiaProc),
-                1 => FlaUIHelper.ClickAt(x, y, 1, uiaProc),
-                2 => FlaUIHelper.ClickAt(x, y, 2, uiaProc),
-                _ => false
-            };
-            if (flag) return; // 成功，不移动鼠标
+                if (pos.UseUIA && (!string.IsNullOrEmpty(pos.AutoId) || !string.IsNullOrEmpty(pos.UName) || !string.IsNullOrEmpty(pos.ClassN)))
+                {
+                    // 优先使用基于 hwnd 的 UIA 点击（更精确）
+                    bool ok = FlaUIHelper.ClickHwnd(hwnd, x, y, pos.ActKey);
+                    if (ok) continue;
+
+                    // 回退：尝试按进程名/属性匹配（兼容旧逻辑）
+                    try
+                    {
+                        WinApi.GetWindowThreadProcessId(hwnd, out uint pid);
+                        if (pid != 0)
+                        {
+                            using var p = System.Diagnostics.Process.GetProcessById((int)pid);
+                            ok = FlaUIHelper.ClickProp(p.ProcessName, pos.AutoId, pos.UName, pos.ClassN);
+                            if (ok) continue;
+                        }
+                    }
+                    catch { }
+                }
+                WinApi.SendClick(hwnd, x, y, pos.ActKey, pos.OpMode);
+            }
+            return;
         }
 
-        // 2. 若 UIA 未成功，回退到传统模拟
-        if (!clicked)
-        {
-            Cursor.Position = new Point(x, y);
-            if (btn == 0)
-            {
-                if (mode == 0 || mode == 1) WinApi.LeftDown();
-                if (mode == 0 || mode == 2) WinApi.LeftUp();
-            }
-            else if (btn == 1)
-            {
-                if (mode == 0 || mode == 1) WinApi.MiddleDown();
-                if (mode == 0 || mode == 2) WinApi.MiddleUp();
-            }
-            else if (btn == 2)
-            {
-                if (mode == 0 || mode == 1) WinApi.RightDown();
-                if (mode == 0 || mode == 2) WinApi.RightUp();
-            }
-        }
+        Cursor.Position = new Point(x, y);
+        int btn = pos.ActKey;
+        int mode = pos.OpMode;
+        if (btn == 0) { if (mode == 0 || mode == 1) WinApi.LeftDown(); if (mode == 0 || mode == 2) WinApi.LeftUp(); }
+        else if (btn == 1) { if (mode == 0 || mode == 1) WinApi.MiddleDown(); if (mode == 0 || mode == 2) WinApi.MiddleUp(); }
+        else if (btn == 2) { if (mode == 0 || mode == 1) WinApi.RightDown(); if (mode == 0 || mode == 2) WinApi.RightUp(); }
     }
 
     private void KPress(int vk, int mod, int mode)
@@ -302,14 +337,14 @@ internal class Core
             else if ((mod & 2) != 0) mk = Keys.Shift;
             else if ((mod & 4) != 0) mk = Keys.Alt;
             if (mk != 0 && (mode == 0 || mode == 1))
-                FlaUIHelper.PressKey(mk);  // 使用 FlaUIHelper
+                FlaUIHelper.PressKey(mk);
         }
 
         // 主键
         Keys key = (Keys)vk;
-        if (mode == 0 || mode == 1)
+        if (mode == 0 || mode == 1) 
             FlaUIHelper.PressKey(key);
-        if (mode == 0 || mode == 2)
+        if (mode == 0 || mode == 2) 
             FlaUIHelper.ReleaseKey(key);
 
         // 释放修饰键
@@ -319,11 +354,13 @@ internal class Core
             if ((mod & 1) != 0) mk = Keys.Control;
             else if ((mod & 2) != 0) mk = Keys.Shift;
             else if ((mod & 4) != 0) mk = Keys.Alt;
-            if (mk != 0)
+            if (mk != 0) 
                 FlaUIHelper.ReleaseKey(mk);
         }
     }
+    #endregion
 
+    #region 坐标管理（增删改）
     public void Add(int x, int y, string? desc = null, int actType = 0, int actKey = 0, int modKey = 0, int opMode = 0, int waitMs = 0)
     {
         cfg.PosList.Add(new Config.PosData
@@ -359,7 +396,9 @@ internal class Core
             cfg.Save();
         }
     }
+    #endregion
 
+    #region 资源释放
     public void Dispose()
     {
         Stop();
@@ -370,4 +409,5 @@ internal class Core
         dTmr.Tick -= DTick;
         dTmr.Dispose();
     }
+    #endregion
 }

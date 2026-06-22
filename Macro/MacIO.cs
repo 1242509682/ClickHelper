@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace ClickHelper.Macro;
+namespace ClickHelper;
 
 /// <summary> 宏文件读写（TXT格式） </summary>
 public static class MacIO

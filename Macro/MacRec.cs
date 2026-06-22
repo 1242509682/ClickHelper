@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using static ClickHelper.WinApi;
 
-namespace ClickHelper.Macro;
+namespace ClickHelper;
 
 /// <summary> 宏录制器（全局钩子） </summary>
 public class MacRec : IDisposable
