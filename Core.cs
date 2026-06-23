@@ -48,6 +48,24 @@ internal class Core
     #region 启动/停止控制
     public void Start()
     {
+        // 缺失OpenCvSharp 不启动与图像识别有关的任务
+        if (cfg.PosList.Any(p => p.UseImage && !Check.IsReady()))
+        {
+            using var dlg = new MissingCvForm();
+            dlg.ShowDialog();
+            var main = Application.OpenForms.OfType<Main>().FirstOrDefault();
+            main?.SetStat("图像匹配不可用，请安装OpenCvSharp依赖");
+            return; 
+        }
+
+        // 缺失 OCR 模型（文字识别依赖）不启用任务
+        if (cfg.PosList.Any(p => p.UseTxt && !OcrHelper.Init()))
+        {
+            var main = Application.OpenForms.OfType<Main>().FirstOrDefault();
+            main?.SetStat("OCR语言模型缺失，文字识别失败");
+            return;
+        }
+
         lock (lck)
         {
             if (run) return;
@@ -176,17 +194,6 @@ internal class Core
         // ---- 文字匹配 + 图像匹配 ----
         if (pos.ImageTemp != null && pos.ImageTemp.Length > 0)
         {
-            if (!Check.IsReady())
-            {
-                if (!cvMissingShown)
-                {
-                    cvMissingShown = true;
-                    using var dlg = new MissingCvForm();
-                    dlg.ShowDialog();
-                }
-                return; // 跳过此坐标项
-            }
-
             if (!pos.UseImage) return;
 
             var rect = ImgMatch.FindPoint(pos.ImageTemp, pos.Threshold);
@@ -196,11 +203,11 @@ internal class Core
             if (pos.ActType == 2 && !string.IsNullOrEmpty(pos.TextContent))
             {
                 var elem = FlaUIHelper.GetElemPt(rect.Value.X, rect.Value.Y);
-                if (elem != null && FlaUIHelper.SetTxtElem(elem, pos.TextContent))
+                if (elem != null && FlaUIHelper.SetTextDirect(elem, pos.TextContent))
                     return;
                 // 若元素不支持直接设置，则尝试向上查找可输入父级
                 var parent = elem?.FindFirst(FlaUI.Core.Definitions.TreeScope.Ancestors, TrueCondition.Default);
-                if (parent != null && FlaUIHelper.SetTxtElem(parent, pos.TextContent))
+                if (parent != null && FlaUIHelper.SetTextDirect(parent, pos.TextContent))
                     return;
                 // 最后回退全局键盘输入
                 FlaUIHelper.TypeText(pos.TextContent);
@@ -210,8 +217,7 @@ internal class Core
             if (pos.UseTxt && !string.IsNullOrEmpty(pos.TxtMatch))
             {
                 using var tempBmp = ImgMatch.Bytes2Bmp(pos.ImageTemp);
-                if (tempBmp == null)
-                    return; // 模板无效则放弃
+                if (tempBmp == null) return; // 模板无效则放弃
 
                 int w = tempBmp.Width, h = tempBmp.Height;
                 var rect2 = new Rectangle(rect.Value.X - w / 2, rect.Value.Y - h / 2, w, h);
@@ -257,30 +263,33 @@ internal class Core
             case 2: // 文本输入
                 if (!string.IsNullOrEmpty(pos.TextContent))
                 {
-                    // 优先 UIA 定位输入
+                    bool done = false;
                     if (pos.UseUIA && pos.Targets.Count > 0)
                     {
-                        bool done = false;
-                        // 尝试直接通过属性查找编辑框
                         foreach (var t in pos.Targets)
                         {
-                            if (FlaUIHelper.SetTxtProp(t, pos.AutoId, pos.UName, pos.ClassN, pos.TextContent))
-                            { done = true; break; }
+                            // ★ 使用新命名：SetTextToWin（原 SetTextToWindow）
+                            if (FlaUIHelper.SetTextToWin(t, pos.TextContent, pos.AutoId, pos.UName, pos.ClassN))
+                            {
+                                done = true;
+                                break;
+                            }
                         }
-                        if (!done)
-                            FlaUIHelper.TypeText(pos.TextContent); // 回退全局键盘
                     }
-                    else
+                    if (!done)
+                    {
+                        // 回退到全局键盘输入
                         FlaUIHelper.TypeText(pos.TextContent);
+                    }
                 }
                 break;
 
             case 3: // 组合键
                 if (!string.IsNullOrEmpty(pos.ComboKeys))
                 {
-                    var keys = FlaUIHelper.ComboKeys(pos.ComboKeys);
+                    var keys = FlaUIHelper.ParseKeys(pos.ComboKeys);
                     if (keys.Count > 0)
-                        FlaUIHelper.TypeSimultaneously(keys.ToArray());
+                        FlaUIHelper.TypeSimult(keys.ToArray());
                 }
                 break;
         }

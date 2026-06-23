@@ -11,18 +11,20 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
-using PaddleOCRSharp;
+using OpenCvSharp;
+using RapidOCRSharpOnnx;
+using RapidOCRSharpOnnx.Configurations;
+using RapidOCRSharpOnnx.Providers;
+using RapidOCRSharpOnnx.Utils;
 
 namespace ClickHelper;
 
-public class OcrHelper
+public static class OcrHelper
 {
     public static event Action<string, Exception>? OnError;
 
-    public static PaddleOCREngine? Engine;
     private static readonly object Lock = new();
-
-    public static string DownloadUrl = "https://share.weiyun.com/pnRTFWq1";
+    private static string? modelPath;
     private const int TARWID = 800;
     private const int MINDIM = 200;
 
@@ -36,43 +38,26 @@ public class OcrHelper
             Directory.CreateDirectory(CacheDir);
     }
 
+    /// <summary>
+    /// 初始化：验证模型文件是否存在，保存模型路径供后续创建引擎使用
+    /// </summary>
     public static bool Init(string? modelpath = null, bool showAsk = true)
     {
-        if (Engine != null) return true;
-
         lock (Lock)
         {
-            string path = modelpath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "inference");
-
-            if (!ModelExists(path))
-            {
-                if (showAsk)
-                {
-                    using var ask = new AskForm();
-                    ask.ShowDialog();
-                }
-                return false;
-            }
-
             try
             {
-                var config = new OCRModelConfig();
-                var param = new OCRParameter
+                string path = modelpath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "inference");
+                if (!ModelExists(path))
                 {
-                    use_gpu = false,
-                    det_db_thresh = 0.2f,
-                    det_db_box_thresh = 0.4f,
-                    det_db_unclip_ratio = 1.8f,
-                    rec_batch_num = 6,
-                    rec_img_h = 48,
-                    rec_img_w = 320,
-                    use_angle_cls = true,
-                    cls_thresh = 0.9f
-                };
-
-                Engine = new PaddleOCREngine(config, param);
-                var main = Application.OpenForms.OfType<Main>().FirstOrDefault();
-                main?.UpdateOcrStatus();
+                    if (showAsk)
+                    {
+                        using var ask = new AskForm();
+                        ask.ShowDialog();
+                    }
+                    return false;
+                }
+                modelPath = path;
                 return true;
             }
             catch (Exception ex)
@@ -82,17 +67,54 @@ public class OcrHelper
                                     "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Logger.Log(ex, "Init");
                 OnError?.Invoke("Init", ex);
-                Engine = null;
+                modelPath = null;
                 return false;
             }
         }
     }
 
+    // 检查模型文件
     private static bool ModelExists(string path)
     {
-        string detDir = Path.Combine(path, "PP-OCRv6_small_det_infer");
-        string recDir = Path.Combine(path, "PP-OCRv6_small_rec_infer");
-        return Directory.Exists(detDir) && Directory.Exists(recDir);
+        return File.Exists(Path.Combine(path, "PP-OCRv6_small_det.onnx")) &&
+               File.Exists(Path.Combine(path, "PP-OCRv6_small_rec.onnx"));
+    }
+
+    public static bool IsModelReady()
+    {
+        if (string.IsNullOrEmpty(modelPath)) return false;
+        return ModelExists(modelPath);
+    }
+
+    /// <summary>
+    /// 创建临时 OCR 引擎实例（每次调用都会加载模型，用完必须 Dispose）
+    /// </summary>
+    private static RapidOCRSharp CreateEngine()
+    {
+        if (string.IsNullOrEmpty(modelPath))
+            throw new InvalidOperationException("OCR 未初始化，请先调用 Init()");
+
+        try
+        {
+            string detPath = Path.Combine(modelPath, "PP-OCRv6_small_det.onnx");
+            string recPath = Path.Combine(modelPath, "PP-OCRv6_small_rec.onnx");
+
+            var ocrCfg = new OcrConfig(detPath, recPath, LangRec.CH, OCRVersion.PPOCRV6);
+            ocrCfg.DetectorConfig.Thresh = 0.2f;
+            ocrCfg.DetectorConfig.BoxThresh = 0.4f;
+            ocrCfg.DetectorConfig.UnclipRatio = 1.8f;
+            ocrCfg.RecognizerConfig.RecBatchNum = 6;
+            ocrCfg.RecognizerConfig.TextScore = 0.5f;
+            ocrCfg.BatchPoolSize = 1;
+
+            var provider = new ExecutionProviderCPU(ocrCfg);
+            return new RapidOCRSharp(provider);
+        }
+        catch (FileNotFoundException ex)
+        {
+            Logger.Log(ex, "CreateEngine");
+            throw; // 仍然抛出，让上层处理
+        }
     }
 
     /// <summary>
@@ -106,7 +128,7 @@ public class OcrHelper
     }
 
     /// <summary>
-    /// 从缓存读取文本块列表，如果不存在或损坏则返回 null
+    /// 从缓存读取文本块列表
     /// </summary>
     private static List<TextBlock>? LoadFromCache(string hash)
     {
@@ -117,10 +139,7 @@ public class OcrHelper
             string json = File.ReadAllText(cacheFile);
             return JsonConvert.DeserializeObject<List<TextBlock>>(json);
         }
-        catch
-        {
-            return null;
-        }
+        catch { return null; }
     }
 
     /// <summary>
@@ -138,20 +157,16 @@ public class OcrHelper
                 string json = JsonConvert.SerializeObject(blocks);
                 File.WriteAllText(cacheFile, json);
             }
-            finally
-            {
-                sem.Release();
-            }
+            finally { sem.Release(); }
         }
-        catch { /* 缓存写入失败不影响主流程 */ }
+        catch { /* 忽略 */ }
     }
 
     /// <summary> 获取指定矩形区域内的所有文本块（含坐标），支持缓存 </summary>
     public static List<TextBlock>? GetText(Rectangle rect, bool useCache = true)
     {
-        if (Engine == null || rect.Width <= 0 || rect.Height <= 0) return null;
+        if (rect.Width <= 0 || rect.Height <= 0) return null;
 
-        // 1. 截取区域图像并转为字节数组用于计算哈希
         using var bmp = CapRect(rect);
         byte[] imageBytes;
         using (var ms = new MemoryStream())
@@ -159,67 +174,101 @@ public class OcrHelper
             bmp.Save(ms, ImageFormat.Png);
             imageBytes = ms.ToArray();
         }
-
         string hash = ComputeHash(imageBytes);
 
-        // 2. 尝试从缓存加载
+        // 1. 尝试从缓存加载
         if (useCache)
         {
             var cached = LoadFromCache(hash);
-            if (cached != null)
-                return cached;
+            if (cached != null) return cached;
         }
 
-        // 3. 缓存未命中，执行 OCR
+        // 2. 缓存未命中，执行 OCR
         var (proc, scale) = PrepImg(bmp);
         using var _ = proc != bmp ? proc : null;
+
+        // ★ 创建临时引擎
+        using var engine = CreateEngine();
+        Mat mat = ImgMatch.BitmapToMatPooled(proc);
         try
         {
-            var result = Engine.DetectText(proc);
-            if (result?.TextBlocks != null && result.TextBlocks.Count > 0)
-            {
-                // 若缩放则映射坐标回原图
-                if (Math.Abs(scale - 1.0) > 0.001)
-                {
-                    foreach (var block in result.TextBlocks)
-                    {
-                        foreach (var pt in block.BoxPoints)
-                        {
-                            pt.X = (int)(pt.X / scale);
-                            pt.Y = (int)(pt.Y / scale);
-                        }
-                    }
-                }
+            var result = engine.RecognizeText(mat);
 
-                // 异步写入缓存（不等待）
-                Task.Run(() => SaveToCache(hash, result.TextBlocks));
-                return result.TextBlocks;
+            if (result?.DetResult?.Data?.DetItems == null ||
+                result.RecResult?.Data == null ||
+                result.DetResult.Data.DetItems.Length != result.RecResult.Data.Length)
+                return null;
+
+            var detItems = result.DetResult.Data.DetItems;
+            var recItems = result.RecResult.Data;
+
+            var list = new List<TextBlock>();
+            for (int i = 0; i < recItems.Length; i++)
+            {
+                var points = detItems[i].Box.Select(p => new OCRPoint((int)p.X, (int)p.Y)).ToList();
+                list.Add(new TextBlock
+                {
+                    Text = recItems[i].Label ?? "",
+                    Score = recItems[i].Score,
+                    BoxPoints = points
+                });
             }
+
+            // 缩放坐标回原图
+            if (Math.Abs(scale - 1.0) > 0.001)
+            {
+                foreach (var block in list)
+                    for (int j = 0; j < block.BoxPoints.Count; j++)
+                    {
+                        block.BoxPoints[j].X = (int)(block.BoxPoints[j].X / scale);
+                        block.BoxPoints[j].Y = (int)(block.BoxPoints[j].Y / scale);
+                    }
+            }
+
+            // 异步写入缓存
+            Task.Run(() => SaveToCache(hash, list));
+            return list;
         }
         catch (Exception ex) when (ex.Message.Contains("box sizes <100"))
         {
-            // 缩放后异常，尝试原图
+            // 回退原图
+            using Mat mat2 = ImgMatch.BitmapToMatPooled(proc);
             try
             {
-                using var raw = CapRect(rect);
-                var result2 = Engine.DetectText(raw);
-                if (result2?.TextBlocks != null && result2.TextBlocks.Count > 0)
+                var result2 = engine.RecognizeText(mat2);
+                if (result2?.DetResult?.Data?.DetItems != null &&
+                    result2.RecResult?.Data != null &&
+                    result2.DetResult.Data.DetItems.Length == result2.RecResult.Data.Length)
                 {
-                    // 缓存原图结果
-                    Task.Run(() => SaveToCache(hash, result2.TextBlocks));
-                    return result2.TextBlocks;
+                    var detItems2 = result2.DetResult.Data.DetItems;
+                    var recItems2 = result2.RecResult.Data;
+                    var list2 = new List<TextBlock>();
+                    for (int i = 0; i < recItems2.Length; i++)
+                    {
+                        var points = detItems2[i].Box.Select(p => new OCRPoint((int)p.X, (int)p.Y)).ToList();
+                        list2.Add(new TextBlock
+                        {
+                            Text = recItems2[i].Label ?? "",
+                            Score = recItems2[i].Score,
+                            BoxPoints = points
+                        });
+                    }
+                    Task.Run(() => SaveToCache(hash, list2));
+                    return list2;
                 }
             }
-            catch (Exception innerEx)
-            {
-                Logger.Log(innerEx, "GetText (fallback)");
-            }
+            catch (Exception innerEx) { Logger.Log(innerEx, "GetText (fallback)"); }
+            finally { ImgMatch.ReturnMat(mat2); }
         }
         catch (Exception ex)
         {
             Logger.Log(ex, "GetText");
             OnError?.Invoke("GetText", ex);
             return null;
+        }
+        finally
+        {
+            ImgMatch.ReturnMat(mat);
         }
         return null;
     }
@@ -228,26 +277,68 @@ public class OcrHelper
     public static string? RecogRect(Rectangle rect, bool useCache = true)
     {
         var blocks = GetText(rect, useCache);
-        if (blocks == null) return null;
-        return string.Join("", blocks.Select(t => t.Text?.Trim() ?? ""));
+        return blocks == null ? null : string.Join("", blocks.Select(t => t.Text?.Trim() ?? ""));
+    }
+
+    /// <summary> 识别图像，返回文本块列表（含坐标），每行独立 </summary>
+    public static List<TextBlock>? RecogImageBlocks(Bitmap image)
+    {
+        if (image == null) return null;
+        using var engine = CreateEngine();
+        try
+        {
+            using Mat mat = ImgMatch.BitmapToMatPooled(image);
+            var result = engine.RecognizeText(mat);
+            if (result?.DetResult?.Data?.DetItems == null ||
+                result.RecResult?.Data == null ||
+                result.DetResult.Data.DetItems.Length != result.RecResult.Data.Length)
+                return null;
+
+            var detItems = result.DetResult.Data.DetItems;
+            var recItems = result.RecResult.Data;
+            var list = new List<TextBlock>();
+            for (int i = 0; i < recItems.Length; i++)
+            {
+                var points = detItems[i].Box.Select(p => new OCRPoint((int)p.X, (int)p.Y)).ToList();
+                list.Add(new TextBlock
+                {
+                    Text = recItems[i].Label ?? "",
+                    Score = recItems[i].Score,
+                    BoxPoints = points
+                });
+            }
+            return list;
+        }
+        catch (Exception ex)
+        {
+            Logger.Log(ex, "RecogImageBlocks");
+            OnError?.Invoke("RecogImageBlocks", ex);
+            return null;
+        }
     }
 
     /// <summary> 直接识别图像对象，返回拼接后的文字（不缓存） </summary>
     public static string? RecogImage(Bitmap image)
     {
-        if (Engine == null || image == null) return null;
+        if (image == null) return null;
+
+        using var engine = CreateEngine();
+        Mat mat = ImgMatch.BitmapToMatPooled(image);
         try
         {
-            var result = Engine.DetectText(image);
-            if (result?.TextBlocks != null && result.TextBlocks.Count > 0)
-                return string.Join("", result.TextBlocks.Select(t => t.Text?.Trim() ?? ""));
+            var result = engine.RecognizeText(mat);
+            return result?.TextBlocks;
         }
         catch (Exception ex)
         {
             Logger.Log(ex, "RecogImage");
             OnError?.Invoke("RecogImage", ex);
+            return null;
         }
-        return null;
+        finally
+        {
+            ImgMatch.ReturnMat(mat);
+        }
     }
 
     // ---------- 私有辅助 ----------
@@ -284,17 +375,6 @@ public class OcrHelper
         return (src, 1.0);
     }
 
-    public static void Dispose()
-    {
-        lock (Lock)
-        {
-            ClearCache();
-            Engine?.Dispose();
-            Engine = null;
-        }
-    }
-
-    /// <summary> 清理缓存文件 </summary>
     public static void ClearCache()
     {
         try
@@ -302,11 +382,40 @@ public class OcrHelper
             if (Directory.Exists(CacheDir))
             {
                 foreach (var file in Directory.GetFiles(CacheDir, "*.json"))
-                {
                     File.Delete(file);
-                }
             }
+
+            // 释放 MatPool 中残留的 Mat
+            ImgMatch.Dispose();
+
+            // ★ 停止时强制回收内存（释放未使用的托管对象）
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         }
         catch { }
+    }
+}
+
+public class OCRPoint
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public OCRPoint() { }
+    public OCRPoint(int x, int y) { X = x; Y = y; }
+    public override string ToString() => $"({X},{Y})";
+}
+
+public class TextBlock
+{
+    public List<OCRPoint> BoxPoints { get; set; } = new();
+    public string Text { get; set; } = "";
+    public float Score { get; set; }
+    public float cls_score { get; set; }
+    public int cls_label { get; set; }
+    public override string ToString()
+    {
+        if (BoxPoints == null || BoxPoints.Count == 0) return "";
+        return $"{Text},Score:{Score},[{string.Join(",", BoxPoints)}]";
     }
 }

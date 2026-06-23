@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -303,7 +304,7 @@ public class SnapForm : Form
 
     private void DrawBottomHint(Graphics g)
     {
-        var ocrYes = OcrHelper.Engine != null ? "   按 B 识别文字   " : " 按 B 识别文字 (需加载) ";
+        var ocrYes = OcrHelper.IsModelReady() ? "   按 B 识别文字   " : " 按 B 识别文字 (需加载) ";
         string tipText = $"按 Enter 截图   |{ocrYes}|   按 C 复制色号   |   右键/ESC 取消";
         using var font = new Font("Segoe UI", 10, FontStyle.Regular);
         var sz = g.MeasureString(tipText, font);
@@ -416,32 +417,17 @@ public class SnapForm : Form
     #region 辅助功能
     private void DoOcr()
     {
-        if (OcrHelper.Engine == null)
-        {
-            Task.Run(() =>
-            {
-                var ok = OcrHelper.Init();
-                Invoke(() =>
-                {
-                    if (!ok)
-                    {
-                        MessageBox.Show("OCR 未找到语言模型与依赖库请点击下载", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        DialogResult = DialogResult.None;
-                        Close();
-                        return;
-                    }
-                    MessageBox.Show("OCR 文字识别引擎已加载完成..", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                });
-            });
-        }
+        if (!OcrHelper.Init(showAsk: true)) return;
 
-        string? text = OcrHelper.RecogRect(selRect);
-        if (string.IsNullOrEmpty(text))
+        // 改用 GetText 获取带坐标的块，然后拼接换行
+        var blocks = OcrHelper.GetText(selRect);
+        if (blocks == null || blocks.Count == 0)
         {
             MessageBox.Show("未识别到文字。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
+        string text = string.Join(Environment.NewLine, blocks.Select(b => b.Text.Trim()));
         using var edit = new OcrForm(text);
         edit.TopMost = true;
         if (edit.ShowDialog() == DialogResult.OK)

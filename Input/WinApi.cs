@@ -52,6 +52,10 @@ internal class WinApi
     [DllImport("user32.dll")]
     public static extern bool ReleaseCapture();
 
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetForegroundWindow(nint hWnd);
+
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT { public int X; public int Y; }
 

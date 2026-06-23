@@ -11,8 +11,6 @@ internal class Config
 {
     [JsonProperty("跳过关于", Order = -10)] 
     public bool SkipAbout { get; set; } = false;
-    [JsonProperty("自动加载OCR", Order = -10)] 
-    public bool AutoLoadOcr { get; set; } = false;
     [JsonProperty("点击间隔", Order = -9)] 
     public int IntervalMs { get; set; } = 200;
     [JsonProperty("循环次数", Order = -8)]
@@ -83,7 +81,7 @@ internal class Config
         [JsonProperty("文字模式")] 
         public int TxtMode { get; set; } = 0;
         [JsonProperty("文字阈值")] 
-        public float TxtThresh { get; set; } = 0.5f;
+        public float TxtThresh { get; set; } = 0.8f;
 
         // ----- 重构 UIA 多窗口与属性 -----
         [JsonProperty("启用UIA")]

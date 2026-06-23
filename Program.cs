@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace ClickHelper;
 
@@ -8,25 +9,46 @@ namespace ClickHelper;
 internal static class Program
 {
     // 版本号
-    public static string ver => "v1.0.4";
+    private static bool Restart = false;
+    public static string ver => "v1.0.5";
 
     [STAThread]
     static void Main()
     {
-
-        // 确保程序只启动一个实例
-        bool createdNew;
-        using Mutex mutex = new Mutex(true, "ClickHelper_SingleInstance_Mutex", out createdNew);
-
-        if (!createdNew)
+        if (!Restart)
         {
-            MessageBox.Show("程序已在运行中，请勿重复启动。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            return;
+            // 确保程序只启动一个实例
+            bool createdNew;
+            using Mutex mutex = new Mutex(true, "ClickHelper_SingleInstance_Mutex", out createdNew);
+
+            if (!createdNew)
+            {
+                MessageBox.Show("程序已在运行中，请勿重复启动。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
         }
 
         WinApi.SetProcessDPIAware();
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.Run(new Main());
+    }
+
+    /// <summary>
+    /// 重启程序（可用于加载新模型或刷新依赖）
+    /// </summary>
+    public static void RestartApp()
+    {
+        Restart = true;
+
+        // 启动新进程
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = Application.ExecutablePath,
+            UseShellExecute = true
+        });
+
+        // 关闭当前进程
+        Application.Exit();
     }
 }

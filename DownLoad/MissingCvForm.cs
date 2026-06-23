@@ -6,9 +6,11 @@ namespace ClickHelper;
 
 public class MissingCvForm : Form
 {
+    private static string DownloadUrl = "https://share.weiyun.com/oDf96coA";
+
     public MissingCvForm()
     {
-        Text = "图像处理依赖缺失";
+        Text = "图像识别依赖缺失";
         Size = new Size(480, 210);
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -33,7 +35,7 @@ public class MissingCvForm : Form
         // 第一行：提示文字
         var lbl = new Label
         {
-            Text = "检测到缺少截图功能核心文件!\n请下载后解压到本程序根目录",
+            Text = "检测到缺少图像识别功能核心文件!\n请下载解压到根目录后【重启】本程序",
             AutoSize = true,
             Font = new Font("微软雅黑", 9F)
         };
@@ -51,7 +53,7 @@ public class MissingCvForm : Form
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://share.weiyun.com/UtQQgn1I",
+                FileName = DownloadUrl,
                 UseShellExecute = true
             });
         };
@@ -60,7 +62,7 @@ public class MissingCvForm : Form
         // 第三行：压缩包名称
         var zipName = new Label
         {
-            Text = "OpenCvSharp v4.13 图像处理库.zip",
+            Text = "【图像识别】OpenCvSharp v4.13.20260528.zip",
             AutoSize = true,
             Font = new Font("微软雅黑", 8F),
             ForeColor = Color.DimGray
@@ -105,7 +107,7 @@ public class MissingCvForm : Form
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://share.weiyun.com/UtQQgn1I",
+                FileName = DownloadUrl,
                 UseShellExecute = true
             });
             DialogResult = DialogResult.Cancel;

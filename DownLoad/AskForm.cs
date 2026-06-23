@@ -6,9 +6,11 @@ namespace ClickHelper;
 
 public class AskForm : Form
 {
+    private static string DownloadUrl = "https://share.weiyun.com/ZA0pOctN";
+
     public AskForm()
     {
-        Text = "依赖与语言模型下载";
+        Text = "文字识别依赖缺失";
         Size = new Size(480, 210);
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -33,7 +35,7 @@ public class AskForm : Form
         // 第一行：提示文字
         var lbl = new Label
         {
-            Text = "检测到缺少OCR核心文件!\n请下载后解压到本程序根目录",
+            Text = "检测到缺少文字识别功能核心文件!\n请下载解压到根目录后【重启】本程序",
             AutoSize = true,
             Font = new Font("微软雅黑", 9F)
         };
@@ -42,7 +44,7 @@ public class AskForm : Form
         // 第二行：可点击链接（显示模型名称）
         var link = new LinkLabel
         {
-            Text = "PaddleOCR v6 依赖+语言模型",
+            Text = "RapidOCRSharpOnnx v1.2.2 Ocr + 语言文件",
             AutoSize = true,
             Font = new Font("微软雅黑", 9F, FontStyle.Underline),
             LinkColor = Color.Blue
@@ -51,7 +53,7 @@ public class AskForm : Form
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = OcrHelper.DownloadUrl,
+                FileName = DownloadUrl,
                 UseShellExecute = true
             });
         };
@@ -60,7 +62,7 @@ public class AskForm : Form
         // 第三行：压缩包名称
         var zipName = new Label
         {
-            Text = "压缩包：PaddleOCR v6 依赖+语言模型.zip",
+            Text = "【文字识别】RapidOCRSharpOnnx v1.2.2.zip",
             AutoSize = true,
             Font = new Font("微软雅黑", 8F),
             ForeColor = Color.DimGray
@@ -70,7 +72,7 @@ public class AskForm : Form
         // 第四行：大小信息
         var sizeInfo = new Label
         {
-            Text = "压缩包 123 MB | 解压 350 MB | 需 480 MB 空间",
+            Text = "压缩包 45.2 MB | 解压 74.6 MB | 需 120 MB 空间",
             AutoSize = true,
             Font = new Font("微软雅黑", 8F),
             ForeColor = Color.Gray
@@ -105,7 +107,7 @@ public class AskForm : Form
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = OcrHelper.DownloadUrl,
+                FileName = DownloadUrl,
                 UseShellExecute = true
             });
             DialogResult = DialogResult.Cancel;

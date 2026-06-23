@@ -2,8 +2,6 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ClickHelper;
@@ -12,32 +10,25 @@ public partial class AboutForm : Form
 {
     private Config cfg;
     private CheckBox chkNoShow;
-    private CheckBox chkAutoOcr;        // ★ 新增复选框
+    private CheckBox chkAutoOcr;
     private Button btnOk;
     private Panel titlePan;
     private AnimPanel animPan;
     private const string GhUrl = "https://github.com/1242509682/ClickHelper";
-    private const int BottomSpacing = 25;
+    private const int BottomSpacing = 150;
     private readonly string[] FeatArr = {
 
-        "✦点击核心优化✦",
-        "• 新点击类型:文本输入(帮你打字)/组合键(同时按下)",
-        "• 加入UIA(不移动鼠标点击,对游戏进程无效)",
-        "• 优化点击坐标：",
-        "  1.支持坐标重选",
-        "  2.xy为0时以当前鼠标为坐标",
+        "✦功能改进✦",
+        "• 全新图形处理引擎，速度更快，内存占用更低",
+        "• 彻底修复了文字识别后内存不释放的问题",
+        "• 相同文字重复识别，毫秒级响应（缓存机制）",
+        "• 支持根据原图像自动换行并加长窗体",
+        "• 硬盘占用极大降低: 420M -> 142M",
+        "• 坐标编辑器布局全面重构",
+        "• 修复定时任务阻塞线程问题",
+        "• 优化AUI后台输入，支持记事本等控件",
         "",
-        "✦图像点击优化✦",
-        "• 采用OpenCvSharp降低CPU占用",
-        "• 支持从本地路径加载图片到图片匹配",
-        "• 支持OCR文字点击：",
-        "  内存占用过高,请点击<释放OCR> 并重新初始化",
-        "• 加强图片预览窗口：",
-        "  1.滚轮缩放",
-        "  2.双击还原",
-        "  3.右键识别文字/复制剪贴板/另存为文件",
-        "  4.复制Base64字符",
-        "",
+        "PS：因OCR更换,依赖需重新下载",
     };
 
     internal AboutForm(Config config)
@@ -53,7 +44,6 @@ public partial class AboutForm : Form
         this.BackColor = Color.White;
         this.Region = MakeRound(this.ClientRectangle, 16);
         chkNoShow.Checked = cfg.SkipAbout;
-        chkAutoOcr.Checked = cfg.AutoLoadOcr;   // ★ 读取配置
         this.KeyPreview = true;
         this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) this.Close(); };
     }
@@ -195,17 +185,6 @@ public partial class AboutForm : Form
             Margin = new Padding(0, 10, 0, 0)
         };
 
-        // ★ 新增“自动加载OCR”复选框
-        chkAutoOcr = new CheckBox
-        {
-            Text = "自动加载OCR",
-            AutoSize = true,
-            Font = new Font("微软雅黑", 9),
-            Margin = new Padding(10, 0, BottomSpacing, 0),
-            ForeColor = Color.DimGray,
-            Checked = cfg.AutoLoadOcr
-        };
-
         chkNoShow = new CheckBox
         {
             Text = "不显示本窗口",
@@ -243,35 +222,7 @@ public partial class AboutForm : Form
         this.FormClosing += (s, e) =>
         {
             cfg.SkipAbout = chkNoShow.Checked;
-            cfg.AutoLoadOcr = chkAutoOcr.Checked;   // ★ 保存配置
             cfg.Save();
-
-            if (cfg.AutoLoadOcr)
-            {
-                var main = Application.OpenForms.OfType<Main>().FirstOrDefault();
-                if (main != null)
-                {
-                    // 后台加载 OCR（不阻塞UI）
-                    main.SetStat("OCR加载中...");
-                    Task.Run(() =>
-                    {
-                        bool ok = OcrHelper.Init(showAsk: false); // 静默加载，模型缺失不弹窗
-                        this.Invoke(() =>
-                        {
-                            if (ok)
-                                main.SetStat("OCR已加载");
-                            else
-                                main.SetStat("OCR未加载（模型缺失）");
-
-                        });
-
-                    }).ContinueWith(delegate
-                    {
-                        main.UpdateOcrStatus();
-                        main.SetStat("空闲");
-                    });
-                }
-            }
         };
     }
 

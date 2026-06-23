@@ -1,14 +1,12 @@
 taskkill /F /IM ClickHelper.exe 2>nul || exit /b 0
+xcopy "$(ProjectDir)inference" "$(TargetDir)inference\" /E /I /Y
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="taskkill /F /IM ClickHelper.exe 2&gt;nul || exit /b 0&#xD;&#xA;del /f /s /q &quot;$(OutDir)\*.*&quot; &gt;nul 2&gt;&amp;1&#xD;&#xA;for /d %25%25p in (&quot;$(OutDir)\*&quot;) do rd /s /q &quot;%25%25p&quot; 2&gt;nul" />
+      <Exec Command="xcopy &quot;$(ProjectDir)inference&quot; &quot;$(TargetDir)inference\&quot; /E /I /Y" />
   </Target>
 
 timeout /t 1 /nobreak >nul 2>&1
-copy /Y "$(TargetDir)ClickHelper.exe" "%USERPROFILE%\Desktop\点击助手 v1.0.3"
-copy /Y "$(TargetDir)ClickHelper.dll" "%USERPROFILE%\Desktop\点击助手 v1.0.3"
-copy /Y "$(TargetDir)ClickHelper.pdb" "%USERPROFILE%\Desktop\点击助手 v1.0.3"
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="timeout /t 1 /nobreak &gt;nul 2&gt;&amp;1&#xD;&#xA;copy /Y &quot;$(TargetDir)ClickHelper.exe&quot; &quot;%25USERPROFILE%25\Desktop\点击助手 v1.0.3&quot;&#xD;&#xA;copy /Y &quot;$(TargetDir)ClickHelper.dll&quot; &quot;%25USERPROFILE%25\Desktop\点击助手 v1.0.3&quot;&#xD;&#xA;copy /Y &quot;$(TargetDir)ClickHelper.pdb&quot; &quot;%25USERPROFILE%25\Desktop\点击助手 v1.0.3&quot;" />
-  </Target>
+copy /Y "$(TargetDir)ClickHelper.exe" "%USERPROFILE%\Desktop\点击助手 v1.0.5"
+copy /Y "$(TargetDir)ClickHelper.dll" "%USERPROFILE%\Desktop\点击助手 v1.0.5"
+copy /Y "$(TargetDir)ClickHelper.pdb" "%USERPROFILE%\Desktop\点击助手 v1.0.5"

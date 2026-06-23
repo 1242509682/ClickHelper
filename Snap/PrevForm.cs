@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace ClickHelper;
@@ -32,7 +33,7 @@ public class PrevForm : Form
         };
         Controls.Add(panel);
 
-        Bitmap bmp = ClickHelper.ImgMatch.Bytes2Bmp(image);
+        Bitmap bmp = ImgMatch.Bytes2Bmp(image);
         origSize = bmp.Size;
 
         box = new PictureBox
@@ -177,7 +178,8 @@ public class PrevForm : Form
         var img = box.Image as Bitmap;
         if (img == null) return;
 
-        if (OcrHelper.Engine == null)
+        bool ocrReady = OcrHelper.IsModelReady();
+        if (!ocrReady)
         {
             var ans = MessageBox.Show("OCR 引擎尚未加载，是否立即初始化？", "提示",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question);
@@ -197,21 +199,21 @@ public class PrevForm : Form
             }
         }
 
-        try
+        // ★ 改用 RecogImageBlocks 获取带换行的结果
+        var blocks = OcrHelper.RecogImageBlocks(img);
+        if (blocks == null || blocks.Count == 0)
         {
-            string? text = OcrHelper.RecogImage(img);
-            if (string.IsNullOrEmpty(text))
-            {
-                MessageBox.Show("未识别到任何文字。", "OCR 结果", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show($"识别结果：\n\n{text}", "OCR 文字识别", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+            MessageBox.Show("未识别到任何文字。", "OCR 结果", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
         }
-        catch (Exception ex)
+
+        string text = string.Join(Environment.NewLine, blocks.Select(b => b.Text.Trim()));
+        using var ocrForm = new OcrForm(text);
+        ocrForm.TopMost = true;
+        if (ocrForm.ShowDialog() == DialogResult.OK)
         {
-            MessageBox.Show($"识别失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (!string.IsNullOrEmpty(ocrForm.FinalText))
+                Clipboard.SetText(ocrForm.FinalText);
         }
     }
 

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Drawing;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 
@@ -99,7 +101,6 @@ public class Main : Form
         tray!.Visible = false;
         tray.Dispose();
         macroPlay.Dispose();
-        OcrHelper.Dispose(); // 卸载OCR引擎
         Application.Exit();
     }
 
@@ -113,7 +114,6 @@ public class Main : Form
         }
         aboutShow = false;
         this.CenterToScreen();
-        UpdateOcrStatus();
         SetStat("空闲");
     }
 
@@ -491,8 +491,7 @@ public class Main : Form
 
     #region 状态栏
     private StatusStrip stBar;
-    private ToolStripStatusLabel stStat, stCoord, stOcr;
-
+    private ToolStripStatusLabel stStat, stCoord;
     private void InitStatusBar()
     {
         stBar = new StatusStrip
@@ -501,15 +500,7 @@ public class Main : Form
             AutoSize = true,
             BackColor = Color.FromArgb(230, 235, 240)
         };
-        stOcr = new ToolStripStatusLabel(OcrHelper.Engine != null ? "ocr已加载" : "ocr未加载")
-        {
-            Width = 60,
-            Spring = false,
-            AutoSize = true,
-            ForeColor = OcrHelper.Engine != null ? Color.Green : Color.Red,
-            TextAlign = ContentAlignment.MiddleLeft,
-        };
-        stBar.Items.Add(stOcr);
+        bool ready = OcrHelper.IsModelReady();
         stStat = new ToolStripStatusLabel("空闲")
         {
             Spring = false,
@@ -537,17 +528,6 @@ public class Main : Form
         {
             stStat.Text = text;
             StatusChanged?.Invoke(text);
-        }
-    }
-
-    // 更新OCR状态指示
-    public void UpdateOcrStatus()
-    {
-        if (stOcr != null && !stOcr.IsDisposed)
-        {
-            bool loaded = OcrHelper.Engine != null;
-            stOcr.Text = loaded ? "ocr已加载" : "ocr未加载";
-            stOcr.ForeColor = loaded ? Color.Green : Color.Red;
         }
     }
 
@@ -836,11 +816,13 @@ public class Main : Form
             MessageBox.Show("循环次数为0，不会执行");
             return;
         }
+
         if (cfg.PosList.Count == 0)
         {
             MessageBox.Show("坐标管理列表为空");
             return;
         }
+
         manual = true;
         core.Start();
         UpBtns();
@@ -1058,8 +1040,9 @@ public class Main : Form
                     SetStat("坐标管理表为空或循环0，跳过");
                     return;
                 }
-                core.Start();
+
                 manual = false;
+                core.Start();
                 UpBtns();
                 SetStat("定时运行中");
                 if (chkAutoMin.Checked) this.WindowState = FormWindowState.Minimized;
@@ -1069,7 +1052,7 @@ public class Main : Form
                 SetStat("手动运行中");
             }
         }
-        else
+        else // cfg.TimeType == 1（宏播放）
         {
             if (!IsPlaying && !core.Running && !isSnapping && !IsRecording)
             {
@@ -1094,12 +1077,16 @@ public class Main : Form
                 SetStat("定时播放中...");
                 if (chkAutoMin.Checked) this.WindowState = FormWindowState.Minimized;
 
-                macroPlay.Play(data, loopCount: cfg.PosLoopCount, speed: 1.0, done: () =>
+                // ★ 改为异步执行，不阻塞定时器
+                Task.Run(() =>
                 {
-                    this.Invoke(() =>
+                    macroPlay.Play(data, loopCount: cfg.PosLoopCount, speed: 1.0, done: () =>
                     {
-                        IsPlaying = false;
-                        SetStat(cfg.PosLoopCount == -1 ? "已停止" : "播放完成");
+                        this.Invoke(() =>
+                        {
+                            IsPlaying = false;
+                            SetStat(cfg.PosLoopCount == -1 ? "已停止" : "播放完成");
+                        });
                     });
                 });
             }
