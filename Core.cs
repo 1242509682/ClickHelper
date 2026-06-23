@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using FlaUI.Core.Conditions;
+using static ClickHelper.Program;
 using Point = System.Drawing.Point;
 using Timer = System.Windows.Forms.Timer;
 
@@ -16,7 +17,6 @@ internal class Core
     #region 字段与属性
     private Timer tmr;
     private Timer dTmr;
-    private Config cfg;
     private int idx;
     private bool run;
     private bool delay;
@@ -32,9 +32,8 @@ internal class Core
     #endregion
 
     #region 构造与初始化
-    public Core(Config config)
+    public Core()
     {
-        cfg = config;
         tmr = new Timer { Interval = cfg.IntervalMs };
         tmr.Tick += Tick;
         dTmr = new Timer();

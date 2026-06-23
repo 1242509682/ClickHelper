@@ -26,14 +26,14 @@ internal class HotKey
     public void Register()
     {
         Unregister();
-        RegisterHotKey(hwnd, HOTKEY_F6, MOD_NOREPEAT, (uint)hkF6);
-        RegisterHotKey(hwnd, HOTKEY_ALT_L, MOD_ALT, (uint)hkAlt);
+        RegisterHotKey(hwnd, HOTKEY_F9, MOD_NOREPEAT, (uint)hkF6);
+        RegisterHotKey(hwnd, HOTKEY_ALT_S, MOD_ALT, (uint)hkAlt);
     }
 
     public void Unregister()
     {
-        RegisterHotKey(hwnd, HOTKEY_F6);
-        RegisterHotKey(hwnd, HOTKEY_ALT_L);
+        RegisterHotKey(hwnd, HOTKEY_F9);
+        RegisterHotKey(hwnd, HOTKEY_ALT_S);
     }
 
     public void UpdateKeys(int newF6, int newAlt)
@@ -48,12 +48,12 @@ internal class HotKey
         if (m.Msg == 0x0312) // WM_HOTKEY
         {
             int id = m.WParam.ToInt32();
-            if (id == HOTKEY_F6)
+            if (id == HOTKEY_F9)
             {
                 actStart?.Invoke();
                 return true;
             }
-            else if (id == HOTKEY_ALT_L)
+            else if (id == HOTKEY_ALT_S)
             {
                 actRecord?.Invoke();
                 return true;

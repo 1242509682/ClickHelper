@@ -75,8 +75,8 @@ internal class WinApi
     public const uint WM_KEYUP = 0x0101;
 
     // ---- 热键 ID ----
-    public const int HOTKEY_F6 = 1;
-    public const int HOTKEY_ALT_L = 2;
+    public const int HOTKEY_F9 = 1;
+    public const int HOTKEY_ALT_S = 2;
     public const uint MOD_ALT = 0x0001;
     public const uint MOD_CONTROL = 0x0002;
     public const uint MOD_SHIFT = 0x0004;

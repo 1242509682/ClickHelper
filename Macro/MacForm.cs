@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using static ClickHelper.Program;
 
 namespace ClickHelper;
 
@@ -15,8 +16,6 @@ public class MacForm : Form
     private ComboBox cboRecHot, cboPlayHot;
     private Label lblStatus;
     private ToolTip tip = new ToolTip();
-
-    private Config cfg;
     private Action changed;
     private Main mainForm;
     private string curMacro;
@@ -24,9 +23,8 @@ public class MacForm : Form
     private FileSystemWatcher watcher;
     private Dictionary<string, string> fileMap;
 
-    internal MacForm(Config config, Action onChanged, Main mainFormRef)
+    internal MacForm(Action onChanged, Main mainFormRef)
     {
-        cfg = config;
         changed = onChanged;
         mainForm = mainFormRef;
         fileMap = new Dictionary<string, string>();

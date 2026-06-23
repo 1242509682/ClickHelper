@@ -34,7 +34,10 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(ProjectDir)inference&quot; &quot;$(TargetDir)inference\&quot; /E /I /Y" />
-  </Target>
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+		<Exec Command="taskkill /F /IM ClickHelper.exe 2&gt;nul || exit /b 0&#xD;&#xA;del /f /s /q &quot;$(OutDir)\*.*&quot; &gt;nul 2&gt;&amp;1&#xD;&#xA;for /d %25%25p in (&quot;$(OutDir)\*&quot;) do rd /s /q &quot;%25%25p&quot; 2&gt;nul&#xD;&#xA;xcopy &quot;$(ProjectDir)inference&quot; &quot;$(TargetDir)inference\&quot; /E /I /Y" />
+	</Target>
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	  <Exec Command="powershell -Command &quot;Start-Process -FilePath '$(TargetDir)$(TargetName).exe' -WindowStyle Normal&quot;" />
+	</Target>
 </Project>

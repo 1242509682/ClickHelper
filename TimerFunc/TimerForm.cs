@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using static ClickHelper.Program;
 
 namespace ClickHelper;
 
 public class TimerForm : Form
 {
     #region 字段
-    private Config cfg;
     private RadioButton rbDate, rbTimer;
     private DateTimePicker dtpStart, dtpEnd;
     private CheckBox chkNoEnd;
@@ -20,9 +20,8 @@ public class TimerForm : Form
     #endregion
 
     #region 构造与初始化
-    internal TimerForm(Config config)
+    internal TimerForm()
     {
-        cfg = config;
         InitForm();
         InitLayout();
         InitEvents();

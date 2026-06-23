@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Drawing;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using static ClickHelper.Program;
 
 namespace ClickHelper;
 
@@ -11,9 +11,6 @@ namespace ClickHelper;
 public class Main : Form
 {
     // 通用字段（跨模块）
-    private Config cfg;
-    private Core core;
-    private HotKey hk;
     private Timer mTimer, tCheck;
     private NotifyIcon tray;
     private ContextMenuStrip tMenu;
@@ -44,8 +41,6 @@ public class Main : Form
         if (!System.IO.Directory.Exists(Config.ScriptDir))
             System.IO.Directory.CreateDirectory(Config.ScriptDir);
 
-        cfg = Config.Load();
-        core = new Core(cfg);
         hk = new HotKey(this.Handle, OnHotKey, GetPos, cfg.ClickHotKey, cfg.HotKeyAltL);
 
         macroRec = new MacRec();
@@ -109,7 +104,7 @@ public class Main : Form
         aboutShow = true;
         if (!cfg.SkipAbout)
         {
-            using var about = new AboutForm(cfg);
+            using var about = new AboutForm();
             about.ShowDialog();
         }
         aboutShow = false;
@@ -169,7 +164,7 @@ public class Main : Form
         };
         btnAbout.Click += (s, e) =>
         {
-            using var about = new AboutForm(cfg);
+            using var about = new AboutForm();
             about.ShowDialog(this);
         };
         btnAbout.MouseEnter += (s, e) => btnAbout.BackColor = Color.FromArgb(60, 120, 200);
@@ -472,7 +467,7 @@ public class Main : Form
         cboSnap.SelectedIndexChanged += (s, e) => { if (cboSnap.SelectedItem is Keys k) { cfg.SnapHotKey = (int)k; cfg.Save(); RegSnapKey(); } };
         btnTimer.Click += (s, e) =>
         {
-            using var dlg = new TimerForm(cfg);
+            using var dlg = new TimerForm();
             dlg.ShowDialog(this);
             RegTimerKey();
         };
@@ -634,7 +629,7 @@ public class Main : Form
                 cfg.TimerHotKey = newCfg.TimerHotKey;
                 cfg.Save();
                 LoadCfg();
-                core = new Core(cfg);
+                core = new Core();
                 hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL);
                 RegMacKeys();
                 RegSnapKey();
@@ -749,7 +744,7 @@ public class Main : Form
                 macForm.SelectMacroByName(selectMacro);
             return;
         }
-        macForm = new MacForm(cfg, LoadCfg, this);
+        macForm = new MacForm(LoadCfg, this);
         macForm.FormClosed += (s, e) => macForm = null;
         if (!string.IsNullOrEmpty(selectMacro))
             macForm.SelectMacroByName(selectMacro);
@@ -1208,7 +1203,7 @@ public class Main : Form
     #region 辅助 & 窗口过程
     private void OpenPos()
     {
-        using var dlg = new PosForm(cfg, core, LoadCfg);
+        using var dlg = new PosForm(LoadCfg);
         dlg.ShowDialog(this);
     }
 

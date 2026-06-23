@@ -3,12 +3,12 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using static ClickHelper.Program;
 
 namespace ClickHelper;
 
 public partial class AboutForm : Form
 {
-    private Config cfg;
     private CheckBox chkNoShow;
     private CheckBox chkAutoOcr;
     private Button btnOk;
@@ -31,9 +31,8 @@ public partial class AboutForm : Form
         "PS：因OCR更换,依赖需重新下载",
     };
 
-    internal AboutForm(Config config)
+    internal AboutForm()
     {
-        cfg = config;
         Init();
         this.StartPosition = FormStartPosition.CenterParent;
         this.FormBorderStyle = FormBorderStyle.None;

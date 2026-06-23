@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using static ClickHelper.Program;
 
 namespace ClickHelper;
 
@@ -10,8 +11,6 @@ public partial class PosForm : Form
     // ---- 通用字段 ----
     private TableLayoutPanel main;
     private ListBox lst;
-    private Config cfg;
-    private Core core;
     private Action onChanged;
     private Timer refTimer;
     private int lastCnt;
@@ -19,10 +18,8 @@ public partial class PosForm : Form
     private int dragIdx = -1;
 
     #region 构造与初始化
-    internal PosForm(Config config, Core clickCore, Action changedCallback)
+    internal PosForm(Action changedCallback)
     {
-        cfg = config;
-        core = clickCore;
         onChanged = changedCallback;
 
         this.Text = "坐标管理器";

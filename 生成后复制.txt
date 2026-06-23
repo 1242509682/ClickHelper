@@ -1,12 +1,16 @@
+生成前事件：
 taskkill /F /IM ClickHelper.exe 2>nul || exit /b 0
+del /f /s /q "$(OutDir)\*.*" >nul 2>&1
+for /d %%p in ("$(OutDir)\*") do rd /s /q "%%p" 2>nul
 xcopy "$(ProjectDir)inference" "$(TargetDir)inference\" /E /I /Y
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="taskkill /F /IM ClickHelper.exe 2&gt;nul || exit /b 0&#xD;&#xA;del /f /s /q &quot;$(OutDir)\*.*&quot; &gt;nul 2&gt;&amp;1&#xD;&#xA;for /d %25%25p in (&quot;$(OutDir)\*&quot;) do rd /s /q &quot;%25%25p&quot; 2&gt;nul" />
-      <Exec Command="xcopy &quot;$(ProjectDir)inference&quot; &quot;$(TargetDir)inference\&quot; /E /I /Y" />
-  </Target>
+生成后事件：
+powershell -Command "Start-Process -FilePath '$(TargetDir)$(TargetName).exe' -WindowStyle Normal"
 
-timeout /t 1 /nobreak >nul 2>&1
-copy /Y "$(TargetDir)ClickHelper.exe" "%USERPROFILE%\Desktop\点击助手 v1.0.5"
-copy /Y "$(TargetDir)ClickHelper.dll" "%USERPROFILE%\Desktop\点击助手 v1.0.5"
-copy /Y "$(TargetDir)ClickHelper.pdb" "%USERPROFILE%\Desktop\点击助手 v1.0.5"
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+		<Exec Command="taskkill /F /IM ClickHelper.exe 2&gt;nul || exit /b 0&#xD;&#xA;del /f /s /q &quot;$(OutDir)\*.*&quot; &gt;nul 2&gt;&amp;1&#xD;&#xA;for /d %25%25p in (&quot;$(OutDir)\*&quot;) do rd /s /q &quot;%25%25p&quot; 2&gt;nul&#xD;&#xA;xcopy &quot;$(ProjectDir)inference&quot; &quot;$(TargetDir)inference\&quot; /E /I /Y" />
+	</Target>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	  <Exec Command="powershell -Command &quot;Start-Process -FilePath '$(TargetDir)$(TargetName).exe' -WindowStyle Normal&quot;" />
+	</Target>

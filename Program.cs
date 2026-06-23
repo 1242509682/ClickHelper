@@ -12,6 +12,11 @@ internal static class Program
     private static bool Restart = false;
     public static string ver => "v1.0.5";
 
+    // ★ 全局实例（统一管理，避免多处维护）
+    internal static Config cfg = new Config();
+    internal static Core? core;
+    internal static HotKey? hk;
+
     [STAThread]
     static void Main()
     {
@@ -27,6 +32,10 @@ internal static class Program
                 return;
             }
         }
+
+        // ★ 加载配置
+        cfg = Config.Load();
+        core = new Core();
 
         WinApi.SetProcessDPIAware();
         Application.EnableVisualStyles();
