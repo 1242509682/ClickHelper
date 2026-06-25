@@ -5,34 +5,29 @@ using System.Diagnostics;
 
 namespace ClickHelper;
 
-/// <summary> 程序入口 </summary>
 internal static class Program
 {
-    // 版本号
-    private static bool Restart = false;
     public static string ver => "v1.0.6";
 
-    // ★ 全局实例（统一管理，避免多处维护）
     internal static Config cfg = new Config();
     internal static Core? core;
+
+    // 静态互斥体，便于释放
+    private static Mutex? mutex;
 
     [STAThread]
     static void Main()
     {
-        if (!Restart)
-        {
-            // 确保程序只启动一个实例
-            bool createdNew;
-            using Mutex mutex = new Mutex(true, "ClickHelper_SingleInstance_Mutex", out createdNew);
+        bool flag;
+        // 使用 Global\ 前缀使互斥体跨会话生效
+        mutex = new Mutex(true, @"Global\ClickHelper_SingleInstance_Mutex", out flag);
 
-            if (!createdNew)
-            {
-                MessageBox.Show("程序已在运行中，请勿重复启动。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
+        if (!flag)
+        {
+            MessageBox.Show("点击助手正在运行，请勿重复启动。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
         }
 
-        // ★ 加载配置
         cfg = Config.Load();
         core = new Core();
 
@@ -42,21 +37,19 @@ internal static class Program
         Application.Run(new Main());
     }
 
-    /// <summary>
-    /// 重启程序（可用于加载新模型或刷新依赖）
-    /// </summary>
     public static void RestartApp()
     {
-        Restart = true;
+        // ★ 释放互斥体，允许新进程获取
+        mutex?.ReleaseMutex();
+        mutex?.Dispose();
+        mutex = null;
 
-        // 启动新进程
         Process.Start(new ProcessStartInfo
         {
             FileName = Application.ExecutablePath,
             UseShellExecute = true
         });
 
-        // 关闭当前进程
         Application.Exit();
     }
 }
