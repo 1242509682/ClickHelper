@@ -327,19 +327,13 @@ public static class FlaUIHelper
         catch (Exception ex) { Logger.Log(ex, "FlaUIHelper.TypeSeq"); }
     }
 
-    /// <summary> 解析组合键字符串（如 "Ctrl+C"）</summary>
-    public static List<Keys> ParseKeys(string combo)
+    /// <summary> 执行组合键字符串（如 "Ctrl+C"）</summary>
+    public static void TypeCombo(string combo)
     {
-        var result = new List<Keys>();
-        if (string.IsNullOrEmpty(combo)) return result;
-
-        var parts = combo.Split('+');
-        foreach (var p in parts)
-        {
-            if (Enum.TryParse<Keys>(p.Trim(), true, out var key))
-                result.Add(key);
-        }
-        return result;
+        if (string.IsNullOrEmpty(combo)) return;
+        var keys = WinApi.ParseHotKeyToKeys(combo);
+        if (keys.Count > 0)
+            TypeSimult(keys.ToArray());
     }
     #endregion
 

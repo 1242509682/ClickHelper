@@ -4,6 +4,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static ClickHelper.Config;
 
 namespace ClickHelper;
 
@@ -419,8 +420,17 @@ public class SnapForm : Form
     {
         if (!OcrHelper.Init(showAsk: true)) return;
 
+        // 弹出配置窗口
+        var opt = new OcrOpt();
+        using (var dlg = new OcrOptForm(opt))
+        {
+            if (dlg.ShowDialog() != DialogResult.OK)
+                return;
+            opt = dlg.GetResult();
+        }
+
         // 改用 GetText 获取带坐标的块，然后拼接换行
-        var blocks = OcrHelper.GetText(selRect);
+        var blocks = OcrHelper.GetText(selRect,false,opt);
         if (blocks == null || blocks.Count == 0)
         {
             MessageBox.Show("未识别到文字。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);

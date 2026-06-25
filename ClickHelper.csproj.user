@@ -5,6 +5,9 @@
     <Compile Update="AboutForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Anim\AimForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Anim\AnimForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -13,6 +16,9 @@
     </Compile>
     <Compile Update="DownLoad\AskForm.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Input\HotKeyBox.cs">
+      <SubType>UserControl</SubType>
     </Compile>
     <Compile Update="Input\RecordKey.cs">
       <SubType>Form</SubType>
@@ -27,6 +33,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="Ocr\OcrForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Ocr\OcrOptForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="PosFunc\PickForm.cs">

@@ -12,6 +12,9 @@ public class MacPlay
 {
     private CancellationTokenSource cts;
 
+    // 进度条 当前索引, 总数
+    public event Action<int, int>? PrgChg;  
+
     /// <summary> 是否正在播放 </summary>
     public bool Playing { get; private set; }
 
@@ -57,6 +60,9 @@ public class MacPlay
                             break;
                         Exec(it);
                         idx++;
+
+                        // 触发进度条事件
+                        PrgChg?.Invoke(idx, data.Items.Count);
                     }
                     totalCount++;
 

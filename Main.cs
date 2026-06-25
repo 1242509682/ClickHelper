@@ -1,57 +1,86 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using static ClickHelper.Config;
 using static ClickHelper.Program;
 
 namespace ClickHelper;
 
-/// <info> 主窗口，UI与逻辑协调 </info>
 public class Main : Form
 {
-    // 通用字段（跨模块）
+    // ---- 常量热键ID ----
+    private const int HOTKEY_CLICK = 1;
+    private const int HOTKEY_RECORD = 2;
+    private const int HOTKEY_MAC_REC = 200;
+    private const int HOTKEY_MAC_PLAY = 201;
+    private const int HOTKEY_SNAP = 202;
+    private const int HOTKEY_TIMER = 203;
+
+    // ---- 通用字段 ----
     private Timer mTimer, tCheck;
     private NotifyIcon tray;
     private ContextMenuStrip tMenu;
-    private bool manual;               // 是否手动启动
-    private bool isSnapping;           // 截图互斥
-    private bool aboutShow;            // 关于弹窗状态
-    private bool togTimer;             // 定时热键防重入
-    private DateTime timStart;         // 计时模式起始
+    private bool manual;
+    private bool isSnapping;
+    private bool aboutShow;
+    private bool togTimer;
+    private DateTime timStart;
 
-    // 宏相关字段
+    // ---- 宏相关 ----
     private MacRec macroRec;
     private MacPlay macroPlay;
     private MacForm? macForm;
     private bool macManual = false;
-    private int recHotId = 200;
-    private int playHotId = 201;
-    private int snapHotId = 202;
-    private int timHotId = 203;
 
-    // 状态事件
+    // ---- 状态 ----
     public event Action<string>? StatusChanged;
     public bool IsRecording = false;
     public bool IsPlaying = false;
 
-    #region 构造与窗体初始化
+    // ---- 控件 ----
+    private CheckBox chkAim;
+    private NumericUpDown numInt, numLoop;
+    private Button btnStart, btnStop, btnList, btnSave, btnLoad, btnTimer;
+    private CheckBox chkSim, chkAutoMin;
+    private HotKeyBox hkClick, hkRecord, hkSnap;  // 新增
+
+    // ---- 标题栏 ----
+    private Panel titleBar;
+    private Label lblTitle;
+    private Button btnAbout, btnMin, btnClose;
+
+    // ---- 进度条 ----
+    private ProgressBar progBar;
+
+    // ---- 状态栏 ----
+    private StatusStrip stBar;
+    private ToolStripStatusLabel stStat, stCoord;
+
+    // ---- 瞄准窗体 ----
+    private AimForm? aimForm;
+
     public Main()
     {
         if (!System.IO.Directory.Exists(Config.ScriptDir))
             System.IO.Directory.CreateDirectory(Config.ScriptDir);
 
-        hk = new HotKey(this.Handle, OnHotKey, GetPos, cfg.ClickHotKey, cfg.HotKeyAltL);
+        // 初始化热键管理器
+        HotKeyManager.Initialize(this.Handle);
+        RegisterAllHotKeys();
 
         macroRec = new MacRec();
         macroPlay = new MacPlay();
-        macroRec.SetExcluded(cfg.ClickHotKey, cfg.HotKeyAltL, cfg.MacRecHotKey, cfg.MacPlayHotKey);
+        UpdateMacExcluded();
 
-        InitTitleBar();    // 自定义标题栏
-        InitContent();     // 主内容区（控件）
-        InitStatusBar();   // 状态栏
-        InitTray();        // 托盘
-        LoadCfg();         // 加载配置到控件
+        InitTitleBar();
+        InitContent();
+        SetProg();
+        InitStatusBar();
+        InitTray();
+        LoadCfg();
 
         this.Icon = LoadIcon("ClickHelper.Icon.YX.ico");
         this.FormClosing += OnFormClosing;
@@ -59,7 +88,6 @@ public class Main : Form
         this.Resize += OnFormResize;
         this.KeyPreview = true;
 
-        // 订阅 OCR 错误
         OcrHelper.OnError += (method, ex) =>
         {
             if (this.InvokeRequired)
@@ -68,63 +96,38 @@ public class Main : Form
                 OcrError(method, ex);
         };
 
-        // 定时检查
         tCheck = new Timer { Interval = 1000 };
         tCheck.Tick += TTick;
         if (cfg.TimerEnabled) tCheck.Start();
 
-        RegMacKeys();
-        RegSnapKey();
-        RegTimerKey();
-
-        // 鼠标位置更新定时器
         mTimer = new Timer { Interval = 100 };
         mTimer.Tick += (s, e) => UpInfo();
         mTimer.Start();
     }
 
-    private void OnFormClosing(object? sender, FormClosingEventArgs e)
+    private void RegisterAllHotKeys()
     {
-        hk.Unregister();
-        core.Dispose();
-        macroRec.Dispose();
-        mTimer?.Stop();
-        mTimer?.Dispose();
-        tCheck?.Stop();
-        tCheck?.Dispose();
-        UnTimerKey();
-        tray!.Visible = false;
-        tray.Dispose();
-        macroPlay.Dispose();
-        Application.Exit();
+        HotKeyManager.Register(HOTKEY_CLICK, cfg.ClickHotKey, OnHotKey);
+        HotKeyManager.Register(HOTKEY_RECORD, cfg.RecordHotKey, GetPos);
+        HotKeyManager.Register(HOTKEY_MAC_REC, cfg.MacRecHotKey, ToglRecord);
+        HotKeyManager.Register(HOTKEY_MAC_PLAY, cfg.MacPlayHotKey, SwitchPlay);
+        HotKeyManager.Register(HOTKEY_SNAP, cfg.SnapHotKey, AddSnap);
+        HotKeyManager.Register(HOTKEY_TIMER, cfg.TimerHotKey, TogTimer);
     }
 
-    private void OnFormLoad(object? sender, EventArgs e)
+    private void UpdateMacExcluded()
     {
-        aboutShow = true;
-        if (!cfg.SkipAbout)
+        if (macroRec != null)
         {
-            using var about = new AboutForm();
-            about.ShowDialog();
+            var (_, k1) = WinApi.ParseHotKey(cfg.ClickHotKey);
+            var (_, k2) = WinApi.ParseHotKey(cfg.RecordHotKey);
+            var (_, k3) = WinApi.ParseHotKey(cfg.MacRecHotKey);
+            var (_, k4) = WinApi.ParseHotKey(cfg.MacPlayHotKey);
+            macroRec.SetExcluded((int)k1, (int)k2, (int)k3, (int)k4);
         }
-        aboutShow = false;
-        this.CenterToScreen();
-        SetStat("空闲");
     }
 
-    private void OnFormResize(object? sender, EventArgs e)
-    {
-        if (this.WindowState == FormWindowState.Minimized &&
-            chkAutoMin.Checked)
-            this.Hide();
-    }
-    #endregion
-
-    #region 自定义标题栏
-    private Panel titleBar;
-    private Label lblTitle;
-    private Button btnAbout, btnMin, btnClose;
-
+    // ---- 标题栏 ----
     private void InitTitleBar()
     {
         this.FormBorderStyle = FormBorderStyle.None;
@@ -162,11 +165,7 @@ public class Main : Form
             Size = new Size(28, 28),
             Location = new Point(this.Width - 90, 2)
         };
-        btnAbout.Click += (s, e) =>
-        {
-            using var about = new AboutForm();
-            about.ShowDialog(this);
-        };
+        btnAbout.Click += (s, e) => { using var about = new AboutForm(); about.ShowDialog(this); };
         btnAbout.MouseEnter += (s, e) => btnAbout.BackColor = Color.FromArgb(60, 120, 200);
         btnAbout.MouseLeave += (s, e) => btnAbout.BackColor = Color.Transparent;
 
@@ -209,18 +208,12 @@ public class Main : Form
             if (e.Button == MouseButtons.Left)
             {
                 WinApi.ReleaseCapture();
-                WinApi.SendMessage(this.Handle, 0xA1, (IntPtr)2, IntPtr.Zero);
+                WinApi.SendMessage(this.Handle, 0xA1, (nint)2, nint.Zero);
             }
         };
     }
-    #endregion
 
-    #region 主内容区 (所有操作控件)
-    private NumericUpDown numInt, numLoop;
-    private Button btnStart, btnStop, btnList, btnSave, btnLoad, btnTimer;
-    private CheckBox chkSim, chkAutoMin;
-    private ComboBox cboHot, cboHotAlt, cboSnap;
-
+    // ---- 主内容 ----
     private void InitContent()
     {
         var mainContainer = new TableLayoutPanel
@@ -232,11 +225,8 @@ public class Main : Form
         };
         mainContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         mainContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-
-        // 标题栏放入第一行
         mainContainer.Controls.Add(titleBar, 0, 0);
 
-        // 内容面板
         var main = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -298,16 +288,40 @@ public class Main : Form
         main.Controls.Add(new Label { Text = "间隔", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
         main.Controls.Add(flowCtrl, 1, row++);
 
-        // 自动最小化
-        chkAutoMin = new CheckBox
+        // 自动最小化 + 显示瞄准
+        var flowCb = new FlowLayoutPanel
         {
-            Text = "自动最小化",
+            FlowDirection = FlowDirection.LeftToRight,
+            AutoSize = true,
+            BackColor = Color.Transparent
+        };
+        chkAutoMin = new CheckBox { Text = "自动最小化", AutoSize = true, Font = font, ForeColor = Color.FromArgb(40, 60, 90) };
+        flowCb.Controls.Add(chkAutoMin);
+        chkAim = new CheckBox
+        {
+            Text = "显示瞄准",
             AutoSize = true,
             Font = font,
-            ForeColor = Color.FromArgb(40, 60, 90)
+            ForeColor = Color.FromArgb(40, 60, 90),
+            Checked = cfg.ShowAim
         };
+        chkAim.CheckedChanged += (s, e) => { cfg.ShowAim = chkAim.Checked; cfg.Save(); };
+        flowCb.Controls.Add(chkAim);
         main.Controls.Add(new Label { Text = "", AutoSize = true }, 0, row);
-        main.Controls.Add(chkAutoMin, 1, row++);
+        main.Controls.Add(flowCb, 1, row++);
+        if (core != null)
+        {
+            core.BefClick += (x, y) =>
+            {
+                if (cfg.ShowAim)
+                {
+                    if (this.InvokeRequired)
+                        this.Invoke(() => ShowAim(x, y));
+                    else
+                        ShowAim(x, y);
+                }
+            };
+        }
 
         // 循环 + 批量执行
         var flowLoop = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
@@ -324,58 +338,28 @@ public class Main : Form
         tip.SetToolTip(numLoop, "-1无限，0不循环");
         flowLoop.Controls.Add(numLoop);
         flowLoop.Controls.Add(new Label { Text = "  ", AutoSize = true });
-        chkSim = new CheckBox
-        {
-            Text = "批量执行",
-            AutoSize = true,
-            Font = font,
-            ForeColor = Color.FromArgb(40, 60, 90)
-        };
+        chkSim = new CheckBox { Text = "批量执行", AutoSize = true, Font = font, ForeColor = Color.FromArgb(40, 60, 90) };
         flowLoop.Controls.Add(chkSim);
         main.Controls.Add(new Label { Text = "循环", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
         main.Controls.Add(flowLoop, 1, row++);
 
-        // 热键
+        // 热键（启动）
         main.Controls.Add(new Label { Text = "热键", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
-        cboHot = new ComboBox
-        {
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 70,
-            Font = font,
-            BackColor = Color.White,
-            ForeColor = Color.FromArgb(30, 60, 90)
-        };
-        main.Controls.Add(cboHot, 1, row++);
+        hkClick = new HotKeyBox { HotKey = cfg.ClickHotKey };
+        hkClick.HotKeyChanged += (s, val) => { cfg.ClickHotKey = val; cfg.Save(); HotKeyManager.Update(HOTKEY_CLICK, val); UpdateMacExcluded(); };
+        main.Controls.Add(hkClick, 1, row++);
 
-        // 记录
+        // 记录热键
         main.Controls.Add(new Label { Text = "记录", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
-        var flowRec = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        cboHotAlt = new ComboBox
-        {
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 70,
-            Font = font,
-            BackColor = Color.White,
-            ForeColor = Color.FromArgb(30, 60, 90)
-        };
-        flowRec.Controls.Add(cboHotAlt);
-        flowRec.Controls.Add(new Label { Text = "+ Alt", AutoSize = true, Font = font, ForeColor = Color.DimGray });
-        main.Controls.Add(flowRec, 1, row++);
+        hkRecord = new HotKeyBox { HotKey = cfg.RecordHotKey };
+        hkRecord.HotKeyChanged += (s, val) => { cfg.RecordHotKey = val; cfg.Save(); HotKeyManager.Update(HOTKEY_RECORD, val); UpdateMacExcluded(); };
+        main.Controls.Add(hkRecord, 1, row++);
 
-        // 截图
+        // 截图热键
         main.Controls.Add(new Label { Text = "截图", AutoSize = true, Font = lblFont, ForeColor = Color.FromArgb(40, 60, 90), Margin = new Padding(0, 6, 0, 0) }, 0, row);
-        var flowSnap = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        cboSnap = new ComboBox
-        {
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 70,
-            Font = font,
-            BackColor = Color.White,
-            ForeColor = Color.FromArgb(30, 60, 90)
-        };
-        flowSnap.Controls.Add(cboSnap);
-        flowSnap.Controls.Add(new Label { Text = "+ Alt", AutoSize = true, Font = font, ForeColor = Color.DimGray });
-        main.Controls.Add(flowSnap, 1, row++);
+        hkSnap = new HotKeyBox { HotKey = cfg.SnapHotKey };
+        hkSnap.HotKeyChanged += (s, val) => { cfg.SnapHotKey = val; cfg.Save(); HotKeyManager.Update(HOTKEY_SNAP, val); };
+        main.Controls.Add(hkSnap, 1, row++);
 
         // 坐标管理器
         btnList = new Button
@@ -453,7 +437,7 @@ public class Main : Form
         mainContainer.Controls.Add(main, 0, 1);
         this.Controls.Add(mainContainer);
 
-        // ---- 事件绑定（该模块内） ----
+        // ---- 事件绑定 ----
         btnStart.Click += (s, e) => StartC();
         btnStop.Click += (s, e) => StopC();
         numInt.ValueChanged += (s, e) => { cfg.IntervalMs = (int)numInt.Value; cfg.Save(); core.SetInt(cfg.IntervalMs); };
@@ -462,31 +446,55 @@ public class Main : Form
         btnList.Click += (s, e) => OpenPos();
         btnSave.Click += (s, e) => SaveSc();
         btnLoad.Click += (s, e) => LoadSc();
-        cboHot.SelectedIndexChanged += (s, e) => { if (cboHot.SelectedItem is Keys k) { cfg.ClickHotKey = (int)k; cfg.Save(); hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL); UpMacExcl(); } };
-        cboHotAlt.SelectedIndexChanged += (s, e) => { if (cboHotAlt.SelectedItem is Keys k) { cfg.HotKeyAltL = (int)k; cfg.Save(); hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL); UpMacExcl(); } };
-        cboSnap.SelectedIndexChanged += (s, e) => { if (cboSnap.SelectedItem is Keys k) { cfg.SnapHotKey = (int)k; cfg.Save(); RegSnapKey(); } };
-        btnTimer.Click += (s, e) =>
-        {
-            using var dlg = new TimerForm();
-            dlg.ShowDialog(this);
-            RegTimerKey();
-        };
+        btnTimer.Click += (s, e) => { using var dlg = new TimerForm(); dlg.ShowDialog(this); HotKeyManager.Update(HOTKEY_TIMER, cfg.TimerHotKey); };
         btnMacL.Click += (s, e) => OpenMacForm();
-
-        // 初始化下拉框数据
-        var keys = WinApi.GetCommonKeys();
-        cboHot.Items.AddRange(keys);
-        cboHotAlt.Items.AddRange(keys);
-        cboSnap.Items.AddRange(keys);
-        cboHotAlt.Items.Add(Keys.LButton);
-        cboHotAlt.Items.Add(Keys.RButton);
-        cboHotAlt.Items.Add(Keys.MButton);
     }
-    #endregion
 
-    #region 状态栏
-    private StatusStrip stBar;
-    private ToolStripStatusLabel stStat, stCoord;
+    // ---- 瞄准 ----
+    private void ShowAim(int x, int y)
+    {
+        if (aimForm != null && !aimForm.IsDisposed)
+            aimForm.Close();
+        aimForm = new AimForm(x, y);
+        aimForm.Show();
+    }
+
+    // ---- 进度条 ----
+    private void SetProg()
+    {
+        progBar = new ProgressBar
+        {
+            Dock = DockStyle.Bottom,
+            Height = 20,
+            Style = ProgressBarStyle.Continuous,
+            Minimum = 0,
+            Maximum = 100,
+            Value = 0
+        };
+        this.Controls.Add(progBar);
+        if (core != null)
+        {
+            core.PrgChg += (idx, total) => { if (this.InvokeRequired) this.Invoke(() => UpdProg(idx, total)); else UpdProg(idx, total); };
+            core.Stopped += () =>
+            {
+                if (this.InvokeRequired)
+                    this.Invoke(() => { progBar.Value = 0; SetStat("已停止"); });
+                else
+                { progBar.Value = 0; SetStat("已停止"); }
+            };
+        }
+        macroPlay.PrgChg += (idx, total) => { if (this.InvokeRequired) this.Invoke(() => UpdProg(idx, total)); else UpdProg(idx, total); };
+    }
+
+    private void UpdProg(int idx, int total)
+    {
+        if (total <= 0) { progBar.Value = 0; return; }
+        int val = (int)((idx * 100.0) / total);
+        if (val > 100) val = 100;
+        progBar.Value = val;
+    }
+
+    // ---- 状态栏 ----
     private void InitStatusBar()
     {
         stBar = new StatusStrip
@@ -495,7 +503,6 @@ public class Main : Form
             AutoSize = true,
             BackColor = Color.FromArgb(230, 235, 240)
         };
-        bool ready = OcrHelper.IsModelReady();
         stStat = new ToolStripStatusLabel("空闲")
         {
             Spring = false,
@@ -516,7 +523,6 @@ public class Main : Form
         this.Controls.Add(stBar);
     }
 
-    // 更新状态栏文字
     public void SetStat(string text)
     {
         if (stStat != null && !stStat.IsDisposed)
@@ -531,9 +537,8 @@ public class Main : Form
         if (stCoord == null || stCoord.IsDisposed) return;
         stCoord.Text = $"X:{Control.MousePosition.X} Y:{Control.MousePosition.Y}";
     }
-    #endregion
 
-    #region 托盘
+    // ---- 托盘 ----
     private void InitTray()
     {
         tray = new NotifyIcon
@@ -542,7 +547,6 @@ public class Main : Form
             Text = "点击助手 (双击恢复)",
             Visible = true
         };
-
         tray.DoubleClick += (s, e) =>
         {
             if (aboutShow) return;
@@ -550,40 +554,26 @@ public class Main : Form
             this.WindowState = FormWindowState.Normal;
             this.Activate();
         };
-
         tMenu = new ContextMenuStrip();
         tMenu.Items.Add("显示主窗口", null, (s, e) => { this.Show(); this.WindowState = FormWindowState.Normal; this.Activate(); });
         tMenu.Items.Add("-");
         tMenu.Items.Add("退出程序", null, (s, e) => { tray.Visible = false; Application.Exit(); });
         tray.ContextMenuStrip = tMenu;
     }
-    #endregion
 
-    #region 配置加载/保存
+    // ---- 加载配置 ----
     private void LoadCfg()
     {
         numInt.Value = cfg.IntervalMs;
         numLoop.Value = cfg.PosLoopCount;
         chkSim.Checked = cfg.SimulExec;
-
-        if (cboHot.Items.Contains((Keys)cfg.ClickHotKey))
-            cboHot.SelectedItem = (Keys)cfg.ClickHotKey;
-        else
-            cboHot.SelectedItem = Keys.F6;
-
-        if (cboHotAlt.Items.Contains((Keys)cfg.HotKeyAltL))
-            cboHotAlt.SelectedItem = (Keys)cfg.HotKeyAltL;
-        else
-            cboHotAlt.SelectedItem = Keys.LButton;
-
-        if (cboSnap.Items.Contains((Keys)cfg.SnapHotKey))
-            cboSnap.SelectedItem = (Keys)cfg.SnapHotKey;
-        else
-            cboSnap.SelectedItem = Keys.S;
-
-        UpMacExcl();
+        hkClick.HotKey = cfg.ClickHotKey;
+        hkRecord.HotKey = cfg.RecordHotKey;
+        hkSnap.HotKey = cfg.SnapHotKey;
+        UpdateMacExcluded();
     }
 
+    // ---- 保存/加载配置 ----
     private void SaveSc()
     {
         using var sfd = new SaveFileDialog();
@@ -615,10 +605,11 @@ public class Main : Form
                 cfg.PosList = newCfg.PosList;
                 cfg.SimulExec = newCfg.SimulExec;
                 cfg.ClickHotKey = newCfg.ClickHotKey;
-                cfg.HotKeyAltL = newCfg.HotKeyAltL;
+                cfg.RecordHotKey = newCfg.RecordHotKey;
                 cfg.MacRecHotKey = newCfg.MacRecHotKey;
                 cfg.MacPlayHotKey = newCfg.MacPlayHotKey;
                 cfg.SnapHotKey = newCfg.SnapHotKey;
+                cfg.TimerHotKey = newCfg.TimerHotKey;
                 cfg.TimerEnabled = newCfg.TimerEnabled;
                 cfg.TimerMode = newCfg.TimerMode;
                 cfg.TimerStart = newCfg.TimerStart;
@@ -626,15 +617,11 @@ public class Main : Form
                 cfg.TimerDuration = newCfg.TimerDuration;
                 cfg.TimeType = newCfg.TimeType;
                 cfg.MacroName = newCfg.MacroName;
-                cfg.TimerHotKey = newCfg.TimerHotKey;
                 cfg.Save();
                 LoadCfg();
                 core = new Core();
-                hk.UpdateKeys(cfg.ClickHotKey, cfg.HotKeyAltL);
-                RegMacKeys();
-                RegSnapKey();
-                RegTimerKey();
-                UpMacExcl();
+                RegisterAllHotKeys();
+                UpdateMacExcluded();
                 if (cfg.TimerEnabled) tCheck.Start(); else tCheck.Stop();
                 MessageBox.Show("配置加载成功");
             }
@@ -645,56 +632,8 @@ public class Main : Form
             }
         }
     }
-    #endregion
 
-    #region 热键注册
-    private void RegMacKeys()
-    {
-        UnRegMacKeys();
-        WinApi.RegisterHotKey(this.Handle, recHotId, 0, (uint)cfg.MacRecHotKey);
-        WinApi.RegisterHotKey(this.Handle, playHotId, 0, (uint)cfg.MacPlayHotKey);
-    }
-
-    private void UnRegMacKeys()
-    {
-        WinApi.RegisterHotKey(this.Handle, recHotId);
-        WinApi.RegisterHotKey(this.Handle, playHotId);
-    }
-
-    private void RegSnapKey()
-    {
-        WinApi.RegisterHotKey(this.Handle, snapHotId);
-        WinApi.RegisterHotKey(this.Handle, snapHotId, WinApi.MOD_ALT, (uint)cfg.SnapHotKey);
-    }
-
-    private void RegTimerKey()
-    {
-        UnTimerKey();
-        WinApi.RegisterHotKey(this.Handle, timHotId, 0, (uint)cfg.TimerHotKey);
-    }
-
-    private void UnTimerKey()
-    {
-        WinApi.RegisterHotKey(this.Handle, timHotId);
-    }
-
-    public void UpMacKeys(int newRec, int newPlay)
-    {
-        cfg.MacRecHotKey = newRec;
-        cfg.MacPlayHotKey = newPlay;
-        cfg.Save();
-        RegMacKeys();
-        UpMacExcl();
-    }
-
-    private void UpMacExcl()
-    {
-        if (macroRec != null)
-            macroRec.SetExcluded(cfg.ClickHotKey, cfg.HotKeyAltL, cfg.MacRecHotKey, cfg.MacPlayHotKey);
-    }
-    #endregion
-
-    #region 宏录制 / 播放
+    // ---- 热键处理（宏录制/播放等） ----
     public void ToglRecord()
     {
         if (IsPlaying || isSnapping) return;
@@ -707,7 +646,7 @@ public class Main : Form
     private void StartRecord()
     {
         if (IsRecording || core.Running || IsPlaying || isSnapping) return;
-        macroRec.SetExcluded(cfg.ClickHotKey, cfg.HotKeyAltL, cfg.MacRecHotKey, cfg.MacPlayHotKey);
+        UpdateMacExcluded();
         macroRec.StartRec();
         IsRecording = true;
         SetStat("录制中...");
@@ -787,6 +726,7 @@ public class Main : Form
             this.Invoke((Action)(() =>
             {
                 IsPlaying = false;
+                progBar.Value = 0;
                 SetStat(cfg.PosLoopCount == -1 ? "已停止" : "播放完成");
             }));
         });
@@ -798,11 +738,11 @@ public class Main : Form
         macroPlay.Stop();
         IsPlaying = false;
         macManual = true;
+        progBar.Value = 0;
         SetStat("已停止");
     }
-    #endregion
 
-    #region 点击控制
+    // ---- 点击控制 ----
     private void StartC()
     {
         if (IsRecording || IsPlaying || isSnapping) return;
@@ -811,13 +751,11 @@ public class Main : Form
             MessageBox.Show("循环次数为0，不会执行");
             return;
         }
-
         if (cfg.PosList.Count == 0)
         {
             MessageBox.Show("坐标管理列表为空");
             return;
         }
-
         manual = true;
         core.Start();
         UpBtns();
@@ -832,6 +770,7 @@ public class Main : Form
         core.Stop();
         UpBtns();
         SetStat("空闲");
+        progBar.Value = 0;
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
@@ -844,7 +783,6 @@ public class Main : Form
         btnStop.Enabled = run;
     }
 
-    // 热键回调（启动/停止切换）
     private void OnHotKey()
     {
         if (core.Running)
@@ -853,7 +791,6 @@ public class Main : Form
             StartC();
     }
 
-    // OCR 错误处理
     private void OcrError(string method, Exception ex)
     {
         if (core.Running)
@@ -869,9 +806,8 @@ public class Main : Form
             SetStat($"OCR错误: {ex.Message}");
         }
     }
-    #endregion
 
-    #region 坐标拾取 & 截图
+    // ---- 坐标拾取 & 截图 ----
     private void GetPos()
     {
         if (core.Running || IsRecording || IsPlaying || isSnapping) return;
@@ -924,27 +860,21 @@ public class Main : Form
                         data.ModKey = NewEdit.NewModKey;
                         data.OpMode = NewEdit.NewOpMode;
                         data.WaitMs = NewEdit.NewWaitMs;
-
-                        // ---- 图像匹配 ----
-                        data.UseImage = NewEdit.NewUseImg;        // 原 NewUseImageMatch
-                        data.ImageTemp = NewEdit.NewImgTmp;       // 原 NewImageTemplate
-                        data.Threshold = NewEdit.NewThresh;       // 原 NewThreshold
-
-                        // ---- 文字匹配 ----
+                        data.UseImage = NewEdit.NewUseImg;
+                        data.ImageTemp = NewEdit.NewImgTmp;
+                        data.Threshold = NewEdit.NewThresh;
                         data.UseTxt = NewEdit.NewUseTxt;
                         data.TxtMatch = NewEdit.NewTxtMatch;
                         data.TxtMode = NewEdit.NewTxtMode;
-                        data.TxtThresh = NewEdit.NewTxtThr;       // 原 NewTxtThresh
-
-                        // ---- UIA ----
+                        data.TxtThresh = NewEdit.NewTxtThr;
+                        data.OcrOptions = NewEdit.NewOcrOpt ?? new OcrOpt();
                         data.UseUIA = NewEdit.NewUseUIA;
                         data.Targets = NewEdit.NewTargets;
                         data.AutoId = NewEdit.NewAutoId;
                         data.UName = NewEdit.NewUName;
                         data.ClassN = NewEdit.NewClassN;
-                        data.TextContent = NewEdit.NewTxtVal;     // 原 NewTextContent
-                        data.ComboKeys = NewEdit.NewCombo;        // 原 NewComboKeys
-
+                        data.TextContent = NewEdit.NewTxtVal;
+                        data.ComboKeys = NewEdit.NewCombo;
                         cfg.PosList.Add(data);
                         cfg.Save();
                     }
@@ -963,9 +893,8 @@ public class Main : Form
             isSnapping = false;
         }
     }
-    #endregion
 
-    #region 定时任务
+    // ---- 定时任务 ----
     private void TTick(object? sender, EventArgs e)
     {
         if (!cfg.TimerEnabled) return;
@@ -1035,7 +964,6 @@ public class Main : Form
                     SetStat("坐标管理表为空或循环0，跳过");
                     return;
                 }
-
                 manual = false;
                 core.Start();
                 UpBtns();
@@ -1047,7 +975,7 @@ public class Main : Form
                 SetStat("手动运行中");
             }
         }
-        else // cfg.TimeType == 1（宏播放）
+        else
         {
             if (!IsPlaying && !core.Running && !isSnapping && !IsRecording)
             {
@@ -1072,7 +1000,6 @@ public class Main : Form
                 SetStat("定时播放中...");
                 if (chkAutoMin.Checked) this.WindowState = FormWindowState.Minimized;
 
-                // ★ 改为异步执行，不阻塞定时器
                 Task.Run(() =>
                 {
                     macroPlay.Play(data, loopCount: cfg.PosLoopCount, speed: 1.0, done: () =>
@@ -1110,10 +1037,15 @@ public class Main : Form
                     MessageBox.Show(info, "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
-                string hotKey = ((Keys)cfg.TimerHotKey).ToString();
+                string hotKey = cfg.TimerHotKey;
                 string msg = $"{info}\n\n按 {hotKey} 可停止定时。";
                 if (MessageBox.Show(msg, "启用定时", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
+                    manual = false;
+                    macManual = false;
+                    if (core.Running) StopC();
+                    if (IsPlaying) StopPlay();
+
                     cfg.TimerEnabled = true;
                     cfg.Save();
                     timStart = DateTime.Now;
@@ -1189,18 +1121,16 @@ public class Main : Form
         }
 
         if (IsPlaying && !macManual)
-        {
             StopPlay();
-        }
 
+        progBar.Value = 0;
         SetStat("定时已禁用");
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
     }
-    #endregion
 
-    #region 辅助 & 窗口过程
+    // ---- 辅助 ----
     private void OpenPos()
     {
         using var dlg = new PosForm(LoadCfg);
@@ -1216,35 +1146,46 @@ public class Main : Form
         return SystemIcons.Application;
     }
 
+    // ---- 窗口过程 ----
     protected override void WndProc(ref Message m)
     {
-        if (m.Msg == 0x0312) // WM_HOTKEY
-        {
-            int id = m.WParam.ToInt32();
-            if (id == recHotId)
-            {
-                ToglRecord();
-                return;
-            }
-            else if (id == playHotId)
-            {
-                SwitchPlay();
-                return;
-            }
-            else if (id == snapHotId)
-            {
-                AddSnap();
-                return;
-            }
-            else if (id == timHotId)
-            {
-                TogTimer();
-                return;
-            }
-        }
-        if (hk != null && hk.ProcessHotKey(ref m))
+        if (HotKeyManager.ProcessHotKey(ref m))
             return;
         base.WndProc(ref m);
     }
-    #endregion
+
+    // ---- 窗体事件 ----
+    private void OnFormClosing(object? sender, FormClosingEventArgs e)
+    {
+        HotKeyManager.UnregisterAll();
+        core.Dispose();
+        macroRec.Dispose();
+        mTimer?.Stop();
+        mTimer?.Dispose();
+        tCheck?.Stop();
+        tCheck?.Dispose();
+        tray!.Visible = false;
+        tray.Dispose();
+        macroPlay.Dispose();
+        Application.Exit();
+    }
+
+    private void OnFormLoad(object? sender, EventArgs e)
+    {
+        aboutShow = true;
+        if (!cfg.SkipAbout)
+        {
+            using var about = new AboutForm();
+            about.ShowDialog();
+        }
+        aboutShow = false;
+        this.CenterToScreen();
+        SetStat("空闲");
+    }
+
+    private void OnFormResize(object? sender, EventArgs e)
+    {
+        if (this.WindowState == FormWindowState.Minimized && chkAutoMin.Checked)
+            this.Hide();
+    }
 }

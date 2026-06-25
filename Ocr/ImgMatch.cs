@@ -203,8 +203,5 @@ public static class ImgMatch
         return new Bitmap(ms);
     }
 
-    public static void Dispose()
-    {
-        matPool.Dispose();
-    }
+    public static void Dispose() => matPool.Dispose();
 }

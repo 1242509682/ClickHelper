@@ -10,12 +10,11 @@ internal static class Program
 {
     // 版本号
     private static bool Restart = false;
-    public static string ver => "v1.0.5";
+    public static string ver => "v1.0.6";
 
     // ★ 全局实例（统一管理，避免多处维护）
     internal static Config cfg = new Config();
     internal static Core? core;
-    internal static HotKey? hk;
 
     [STAThread]
     static void Main()

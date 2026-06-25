@@ -15,20 +15,17 @@ public partial class AboutForm : Form
     private Panel titlePan;
     private AnimPanel animPan;
     private const string GhUrl = "https://github.com/1242509682/ClickHelper";
-    private const int BottomSpacing = 150;
+    private const int BottomSpacing = 200;
     private readonly string[] FeatArr = {
-
+        
         "✦功能改进✦",
-        "• 全新图形处理引擎，速度更快，内存占用更低",
-        "• 彻底修复了文字识别后内存不释放的问题",
-        "• 相同文字重复识别，毫秒级响应（缓存机制）",
-        "• 支持根据原图像自动换行并加长窗体",
-        "• 硬盘占用极大降低: 420M -> 142M",
-        "• 坐标编辑器布局全面重构",
-        "• 修复定时任务阻塞线程问题",
-        "• 优化AUI后台输入，支持记事本等控件",
-        "",
-        "PS：因OCR更换,依赖需重新下载",
+        "• 新增动态进度条，实时显示执行进度",
+        "• 文字识别参数可配置化，支持自定义阈值、批大小等",
+        "• 截图/预览OCR前弹窗调整参数，识别更灵活",
+        "• 新增红色瞄准标志，点击时直观显示位置(不含宏播放)",
+        "• 修复定时功能坐标列表模式失效问题",
+        "• 图像匹配失败时可回退到坐标点击",
+        "• 重构热键UI,支持修改组合键",
     };
 
     internal AboutForm()

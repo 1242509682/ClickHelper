@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using static ClickHelper.Config;
 using Font = System.Drawing.Font;
 using Size = System.Drawing.Size;
 
@@ -56,23 +57,17 @@ public class PosEdit : Form
         TabPage imgPage, txtPage;
         row = TabControl(row, out imgPage, out txtPage);
 
-        // 初始化选项卡内的内容
         InitImgMat(pos, imgPage);
+        ocrOpt = pos.OcrOptions ?? new OcrOpt();
         InitTxtMat(pos, txtPage);
 
-        // 底部按钮
         InitOkCan(ref row);
 
-        // 实际行数设置
         lay.RowCount = row;
         Controls.Add(lay);
 
-        // 根据所有 TabPage 内容计算 TabControl 所需最小尺寸
         FitTabSize();
-        tabMat.SelectedIndexChanged += (s, e) =>
-        {
-            this.PerformLayout();
-        };
+        tabMat.SelectedIndexChanged += (s, e) => this.PerformLayout();
 
         int prefW = lay.PreferredSize.Width + lay.Padding.Horizontal;
         int prefH = lay.PreferredSize.Height + lay.Padding.Vertical;
@@ -83,23 +78,16 @@ public class PosEdit : Form
     #endregion
 
     #region 刷新界面状态
-    /// <summary>
-    /// 刷新界面状态（重写父类 Refresh）
-    /// </summary>
     public new void Refresh()
     {
-        // ★ 确保 OCR 已初始化（静默检查模型文件，不弹窗）
         if (!OcrHelper.IsModelReady())
             OcrHelper.Init(showAsk: false);
 
-        //  1. 按键模式切换
         bool isKey = cboAct.SelectedIndex == 1;
         cboMouse.Visible = !isKey;
-        cboKey.Visible = isKey;
-        btnRec.Visible = isKey;
+        hkKey.Visible = isKey;
         cboMod.Enabled = isKey;
 
-        //  2. 图像匹配启用状态
         bool img = chkUseImg.Checked;
         bool imgReady = Check.IsReady();
 
@@ -158,7 +146,7 @@ public class PosEdit : Form
     }
     #endregion
 
-    #region 初始化方法 & 名称 & 坐标
+    #region 名称 & 坐标
     private TextBox txtDesc;
     private NumericUpDown numX, numY;
     private Button btnPick;
@@ -167,7 +155,6 @@ public class PosEdit : Form
 
     private void InitNamCrd(Config.PosData pos, ref int row)
     {
-        // 名称
         lay.Controls.Add(new Label { Text = "名称:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, row);
         txtDesc = new TextBox
         {
@@ -180,7 +167,6 @@ public class PosEdit : Form
         lay.Controls.Add(txtDesc, 1, row);
         row++;
 
-        // 坐标
         lay.Controls.Add(new Label { Text = "坐标:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, row);
         var flowXY = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, BackColor = Color.Transparent };
         flowXY.Controls.Add(new Label { Text = "X:", AutoSize = true, Font = ctrlFnt, ForeColor = lblCol });
@@ -216,14 +202,16 @@ public class PosEdit : Form
     }
     #endregion
 
-    #region 操作类型 & 按键
-    private ComboBox cboAct, cboMouse, cboKey;
-    private Button btnRec;
+    #region 操作类型 & 按键（统一使用 HotKeyBox）
+    private ComboBox cboAct, cboMouse;
+    private HotKeyBox hkKey;  // 替代 cboKey + btnRec
+    private TextBox txtOutput;
     public int NewActType, NewActKey;
-    private TextBox txtOutput; // 输出内容（文本输入或组合键）
+    public string NewKeyString = ""; // 新增：存储按键字符串
+
     private void InitActKey(Config.PosData pos, ref int row)
     {
-        // 类型 + 输出内容（合并到同一行）
+        // 类型 + 输出内容
         lay.Controls.Add(new Label { Text = "类型:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, row);
         var flowType = new FlowLayoutPanel
         {
@@ -245,7 +233,6 @@ public class PosEdit : Form
         cboAct.SelectedIndexChanged += ActChanged;
         flowType.Controls.Add(cboAct);
 
-        // 输出内容文本框（统一）
         var lblOutput = new Label
         {
             Text = "输出内容:",
@@ -270,9 +257,10 @@ public class PosEdit : Form
         lay.Controls.Add(flowType, 1, row);
         row++;
 
-        // 按键
+        // 按键（鼠标下拉 + 键盘组合键输入框）
         lay.Controls.Add(new Label { Text = "按键:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, row);
         var pan = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, BackColor = Color.Transparent };
+
         cboMouse = new ComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
@@ -283,47 +271,26 @@ public class PosEdit : Form
         };
         cboMouse.Items.AddRange(["左键", "中键", "右键"]);
         cboMouse.SelectedIndex = pos.ActType == 0 ? pos.ActKey : 0;
-
-        cboKey = new ComboBox
-        {
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 80,
-            Font = ctrlFnt,
-            BackColor = Color.White,
-            ForeColor = Color.FromArgb(30, 60, 90)
-        };
-        var keys = WinApi.GetCommonKeys();
-        cboKey.Items.AddRange(keys);
-        if (pos.ActType == 1 && cboKey.Items.Contains((Keys)pos.ActKey))
-            cboKey.SelectedItem = (Keys)pos.ActKey;
-        else
-            cboKey.SelectedIndex = 0;
-
-        btnRec = new Button
-        {
-            Text = "录制",
-            AutoSize = true,
-            FlatStyle = FlatStyle.Flat,
-            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(200, 150, 255) },
-            BackColor = Color.FromArgb(240, 230, 255),
-            ForeColor = Color.FromArgb(100, 50, 160),
-            Font = ctrlFnt
-        };
-        btnRec.Click += RecClick;
         pan.Controls.Add(cboMouse);
-        pan.Controls.Add(cboKey);
-        pan.Controls.Add(btnRec);
+
+        // ★ 使用 HotKeyBox 替代下拉框
+        hkKey = new HotKeyBox { HotKey = pos.ActType == 1 ? GetKeyStringFromCode(pos.ActKey) : "A" };
+        pan.Controls.Add(hkKey);
+
         lay.Controls.Add(pan, 1, row);
         row++;
     }
 
-    private void RecClick(object sender, EventArgs e)
+    // 辅助：将虚拟键码转为显示字符串
+    private string GetKeyStringFromCode(int vk)
     {
-        using var rec = new RecordKey();
-        if (rec.ShowDialog() == DialogResult.OK)
+        try
         {
-            if (cboKey.Items.Contains(rec.RecordedKey))
-                cboKey.SelectedItem = rec.RecordedKey;
+            return ((Keys)vk).ToString();
+        }
+        catch
+        {
+            return "A";
         }
     }
     #endregion
@@ -335,7 +302,6 @@ public class PosEdit : Form
 
     private void InitModDly(Config.PosData pos, ref int row)
     {
-        // 修饰键
         lay.Controls.Add(new Label { Text = "修饰键:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, row);
         cboMod = new ComboBox
         {
@@ -350,7 +316,6 @@ public class PosEdit : Form
         lay.Controls.Add(cboMod, 1, row);
         row++;
 
-        // 模式
         lay.Controls.Add(new Label { Text = "模式:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, row);
         cboMode = new ComboBox
         {
@@ -365,7 +330,6 @@ public class PosEdit : Form
         lay.Controls.Add(cboMode, 1, row);
         row++;
 
-        // 延迟
         lay.Controls.Add(new Label { Text = "延迟:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, row);
         numWait = new NumericUpDown
         {
@@ -382,7 +346,7 @@ public class PosEdit : Form
     }
     #endregion
 
-    #region UIA 探测
+    #region UIA 探测（保持不变）
     private CheckBox chkUIA;
     private TextBox txtTgt, txtId, txtNm, txtCls;
     private Button btnProbe;
@@ -395,7 +359,6 @@ public class PosEdit : Form
 
     private void InitUIA(Config.PosData pos, ref int row)
     {
-        // Row 1: UIA 启用 + 识别 + 目标
         lay.Controls.Add(new Label { Text = "UIA:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, row);
         var flow1 = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, BackColor = Color.Transparent };
         chkUIA = new CheckBox
@@ -434,7 +397,6 @@ public class PosEdit : Form
         lay.Controls.Add(flow1, 1, row);
         row++;
 
-        // Row 2: UIA 属性容器（通过 panBox 控制显隐）
         panBox = new Panel
         {
             AutoSize = true,
@@ -510,6 +472,7 @@ public class PosEdit : Form
     #region 文本输入 / 组合键
     public string NewTxtVal = "";
     public string NewCombo = "";
+
     private void ActChanged(object sender, EventArgs e)
     {
         int type = cboAct.SelectedIndex;
@@ -528,7 +491,7 @@ public class PosEdit : Form
     #endregion
 
     #region 图像识别与文字识别 选项卡
-    private TabControl tabMat;   // 图像/文字选项卡
+    private TabControl tabMat;
     private int TabControl(int row, out TabPage imgPage, out TabPage txtPage)
     {
         tabMat = new TabControl
@@ -585,7 +548,7 @@ public class PosEdit : Form
     }
     #endregion
 
-    #region 图像匹配
+    #region 图像匹配（保持不变）
     private CheckBox chkUseImg;
     private Button btnShot, btnLoadImg, btnGetUIA;
     private NumericUpDown numThr;
@@ -594,7 +557,7 @@ public class PosEdit : Form
     public bool NewUseImg;
     public byte[]? NewImgTmp;
     public float NewThresh;
-    private Button btnInitImg;   // 图像识别初始化按钮
+    private Button btnInitImg;
 
     private void InitImgMat(Config.PosData pos, Control parent)
     {
@@ -611,7 +574,6 @@ public class PosEdit : Form
 
         int r = 0;
 
-        // 启用复选框 + 操作按钮
         layImg.Controls.Add(new Label { Text = "启用:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, r);
         var flowImg = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, BackColor = Color.Transparent, WrapContents = false };
         chkUseImg = new CheckBox { Text = "启用", AutoSize = true, Font = ctrlFnt, ForeColor = Color.FromArgb(40, 60, 90) };
@@ -669,7 +631,6 @@ public class PosEdit : Form
         layImg.Controls.Add(flowImg, 1, r);
         r++;
 
-        // 阈值
         layImg.Controls.Add(new Label { Text = "阈值:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, r);
         var flowThr = new FlowLayoutPanel
         {
@@ -704,14 +665,12 @@ public class PosEdit : Form
         layImg.Controls.Add(flowThr, 1, r);
         r++;
 
-        // 预览
         layImg.Controls.Add(new Label { Text = "预览:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, r);
         picTemp = new PictureBox { Size = new Size(160, 90), BorderStyle = BorderStyle.FixedSingle, BackColor = Color.LightGray, SizeMode = PictureBoxSizeMode.Zoom };
         picTemp.Click += PicClick;
         layImg.Controls.Add(picTemp, 1, r);
         r++;
 
-        // 恢复图像数据
         curImage = pos.ImageTemp;
         if (curImage != null && curImage.Length > 0)
         {
@@ -856,17 +815,20 @@ public class PosEdit : Form
     }
     #endregion
 
-    #region 文字匹配
+    #region 文字识别（保持不变）
     private CheckBox chkUseTxt;
     private TextBox txtMatch;
     private NumericUpDown numTxtTh;
     private ComboBox cboTxtMode;
-    private Button btnInitOcr;   // 初始化OCR按钮
-    private Button btnRecog;     // 识别文字按钮
+    private Button btnInitOcr;
+    private Button btnRecog;
     public bool NewUseTxt;
     public string NewTxtMatch = "";
     public int NewTxtMode;
     public float NewTxtThr;
+
+    private OcrOpt ocrOpt;
+    internal OcrOpt NewOcrOpt { get; private set; }
 
     private void InitTxtMat(Config.PosData pos, Control parent)
     {
@@ -883,7 +845,6 @@ public class PosEdit : Form
 
         int r = 0;
 
-        // 启用复选框行
         layTxt.Controls.Add(new Label { Text = "启用:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, r);
         var flowTxt = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, BackColor = Color.Transparent };
         chkUseTxt = new CheckBox { Text = "文字点击", AutoSize = true, Font = ctrlFnt, ForeColor = Color.FromArgb(40, 60, 90) };
@@ -893,7 +854,6 @@ public class PosEdit : Form
         layTxt.Controls.Add(flowTxt, 1, r);
         r++;
 
-        // ---- 按钮行：初始化 + 识别文字 ----
         layTxt.Controls.Add(new Label { Text = "操作:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, r);
         var flowBtn = new FlowLayoutPanel
         {
@@ -902,7 +862,6 @@ public class PosEdit : Form
             BackColor = Color.Transparent
         };
 
-        // 初始化按钮
         btnInitOcr = new Button
         {
             Text = "初始化OCR",
@@ -915,7 +874,6 @@ public class PosEdit : Form
         btnInitOcr.Click += BtnInitOcr_Click;
         flowBtn.Controls.Add(btnInitOcr);
 
-        // 识别文字按钮
         btnRecog = new Button
         {
             Text = "识别文字",
@@ -930,16 +888,32 @@ public class PosEdit : Form
         btnRecog.Click += BtnRecog_Click;
         flowBtn.Controls.Add(btnRecog);
 
+        var btnOcrParam = new Button
+        {
+            Text = "OCR参数",
+            AutoSize = true,
+            FlatStyle = FlatStyle.Flat,
+            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(150, 150, 200) },
+            BackColor = Color.FromArgb(240, 240, 255),
+            ForeColor = Color.FromArgb(60, 60, 120),
+            Font = ctrlFnt
+        };
+        btnOcrParam.Click += (s, e) =>
+        {
+            using var dlg = new OcrOptForm(ocrOpt);
+            if (dlg.ShowDialog() == DialogResult.OK)
+                ocrOpt = dlg.GetResult();
+        };
+        flowBtn.Controls.Add(btnOcrParam);
+
         layTxt.Controls.Add(flowBtn, 1, r);
         r++;
 
-        // 文字内容
         layTxt.Controls.Add(new Label { Text = "文字:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, r);
         txtMatch = new TextBox { Text = pos.TxtMatch ?? "", Dock = DockStyle.Fill, Font = ctrlFnt, BackColor = Color.White };
         layTxt.Controls.Add(txtMatch, 1, r);
         r++;
 
-        // 置信值
         layTxt.Controls.Add(new Label { Text = "置信值:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, r);
         var flowConf = new FlowLayoutPanel
         {
@@ -974,7 +948,6 @@ public class PosEdit : Form
         layTxt.Controls.Add(flowConf, 1, r);
         r++;
 
-        // 匹配模式
         layTxt.Controls.Add(new Label { Text = "模式:", AutoSize = true, Font = lblFnt, ForeColor = lblCol }, 0, r);
         cboTxtMode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80, Font = ctrlFnt, BackColor = Color.White, ForeColor = Color.FromArgb(30, 60, 90) };
         cboTxtMode.Items.AddRange(new object[] { "包含", "精确" });
@@ -985,9 +958,6 @@ public class PosEdit : Form
         parent.Controls.Add(layTxt);
     }
 
-    /// <summary>
-    /// 初始化OCR：检测依赖，缺失则弹窗引导重启
-    /// </summary>
     private void BtnInitOcr_Click(object sender, EventArgs e)
     {
         if (!OcrHelper.Init(showAsk: true)) return;
@@ -1002,9 +972,6 @@ public class PosEdit : Form
             Program.RestartApp();
     }
 
-    /// <summary>
-    /// 识别文字：仅识别当前图片
-    /// </summary>
     private void BtnRecog_Click(object sender, EventArgs e)
     {
         if (picTemp.Image == null)
@@ -1079,8 +1046,37 @@ public class PosEdit : Form
         NewX = (int)numX.Value;
         NewY = (int)numY.Value;
         NewActType = cboAct.SelectedIndex;
-        NewActKey = NewActType == 0 ? cboMouse.SelectedIndex : (int)(Keys)cboKey.SelectedItem;
-        NewModKey = cboMod.SelectedIndex switch { 1 => 1, 2 => 2, 3 => 4, _ => 0 };
+
+        // ★ 按键取值：鼠标用下拉，键盘用 HotKeyBox
+        if (NewActType == 0)
+        {
+            NewActKey = cboMouse.SelectedIndex;
+        }
+        else if (NewActType == 1)
+        {
+            // 从 HotKeyBox 读取字符串，解析为 Keys
+            string keyStr = hkKey.HotKey;
+            var (mods, key) = WinApi.ParseHotKey(keyStr);
+            NewActKey = (int)key;
+            NewModKey = mods switch
+            {
+                WinApi.MOD_CONTROL => 1,
+                WinApi.MOD_SHIFT => 2,
+                WinApi.MOD_ALT => 4,
+                _ => 0
+            };
+        }
+        else
+        {
+            NewActKey = 0;
+        }
+
+        // 如果不是键盘类型，ModKey 由下拉框决定（但键盘已覆盖）
+        if (NewActType != 1)
+        {
+            NewModKey = cboMod.SelectedIndex switch { 1 => 1, 2 => 2, 3 => 4, _ => 0 };
+        }
+
         NewOpMode = cboMode.SelectedIndex;
         NewWaitMs = (int)numWait.Value;
         NewUseUIA = chkUIA.Checked;
@@ -1089,6 +1085,7 @@ public class PosEdit : Form
         NewAutoId = txtId.Text.Trim();
         NewUName = txtNm.Text.Trim();
         NewClassN = txtCls.Text.Trim();
+
         int actType = cboAct.SelectedIndex;
         if (actType == 2)
             NewTxtVal = txtOutput?.Text?.Trim() ?? "";
@@ -1099,6 +1096,7 @@ public class PosEdit : Form
             NewTxtVal = "";
             NewCombo = "";
         }
+
         NewUseImg = chkUseImg.Checked;
         NewImgTmp = curImage;
         NewThresh = (float)numThr.Value;
@@ -1106,6 +1104,7 @@ public class PosEdit : Form
         NewTxtMatch = txtMatch.Text.Trim();
         NewTxtMode = cboTxtMode.SelectedIndex;
         NewTxtThr = (float)numTxtTh.Value;
+        NewOcrOpt = ocrOpt;
     }
     #endregion
 }

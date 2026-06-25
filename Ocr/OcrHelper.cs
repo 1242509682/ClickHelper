@@ -89,7 +89,7 @@ public static class OcrHelper
     /// <summary>
     /// 创建临时 OCR 引擎实例（每次调用都会加载模型，用完必须 Dispose）
     /// </summary>
-    private static RapidOCRSharp CreateEngine()
+    private static RapidOCRSharp CreateEngine(Config.OcrOpt? opt = null)
     {
         if (string.IsNullOrEmpty(modelPath))
             throw new InvalidOperationException("OCR 未初始化，请先调用 Init()");
@@ -100,14 +100,36 @@ public static class OcrHelper
             string recPath = Path.Combine(modelPath, "PP-OCRv6_small_rec.onnx");
 
             var ocrCfg = new OcrConfig(detPath, recPath, LangRec.CH, OCRVersion.PPOCRV6);
-            ocrCfg.DetectorConfig.Thresh = 0.2f;
-            ocrCfg.DetectorConfig.BoxThresh = 0.4f;
-            ocrCfg.DetectorConfig.UnclipRatio = 1.8f;
-            ocrCfg.RecognizerConfig.RecBatchNum = 6;
-            ocrCfg.RecognizerConfig.TextScore = 0.5f;
-            ocrCfg.BatchPoolSize = 1;
 
-            var provider = new ExecutionProviderCPU(ocrCfg);
+            // 应用自定义参数（存在则用，否则默认）
+            if (opt != null)
+            {
+                ocrCfg.DetectorConfig.Thresh = opt.DetThr;
+                ocrCfg.DetectorConfig.BoxThresh = opt.BoxThr;
+                ocrCfg.DetectorConfig.UnclipRatio = opt.Unclip;
+                ocrCfg.RecognizerConfig.RecBatchNum = opt.Batch;
+                ocrCfg.RecognizerConfig.TextScore = opt.RecThr;
+                ocrCfg.BatchPoolSize = opt.BatchPoolSize;
+                ocrCfg.DetectorConfig.LimitSideLen = opt.LimitSideLen;
+                ocrCfg.DetectorConfig.ScoreMode = (ScoreMode)opt.ScoreMode;
+                ocrCfg.DetectorConfig.UseDilation = opt.UseDilation;
+            }
+            else
+            {
+                // 默认值（与之前一致）
+                ocrCfg.DetectorConfig.Thresh = 0.2f;
+                ocrCfg.DetectorConfig.BoxThresh = 0.4f;
+                ocrCfg.DetectorConfig.UnclipRatio = 1.8f;
+                ocrCfg.RecognizerConfig.RecBatchNum = 6;
+                ocrCfg.RecognizerConfig.TextScore = 0.5f;
+                ocrCfg.BatchPoolSize = 1;
+                ocrCfg.DetectorConfig.LimitSideLen = 960;
+                ocrCfg.DetectorConfig.ScoreMode = ScoreMode.FAST;
+                ocrCfg.DetectorConfig.UseDilation = false;
+            }
+
+            // 选择执行提供者
+            ExecutionProvider provider = new ExecutionProviderCPU(ocrCfg);
             return new RapidOCRSharp(provider);
         }
         catch (FileNotFoundException ex)
@@ -163,8 +185,11 @@ public static class OcrHelper
     }
 
     /// <summary> 获取指定矩形区域内的所有文本块（含坐标），支持缓存 </summary>
-    public static List<TextBlock>? GetText(Rectangle rect, bool useCache = true)
+    internal static List<TextBlock>? GetText(Rectangle rect, bool useCache = true, Config.OcrOpt? opt = null)
     {
+        // 如果有自定义参数，强制不使用缓存
+        if (opt != null) useCache = false;
+
         if (rect.Width <= 0 || rect.Height <= 0) return null;
 
         using var bmp = CapRect(rect);
@@ -188,7 +213,7 @@ public static class OcrHelper
         using var _ = proc != bmp ? proc : null;
 
         // ★ 创建临时引擎
-        using var engine = CreateEngine();
+        using var engine = CreateEngine(opt);
         Mat mat = ImgMatch.BitmapToMatPooled(proc);
         try
         {
@@ -274,17 +299,17 @@ public static class OcrHelper
     }
 
     /// <summary> 识别指定矩形区域内的文字，返回拼接文本（也支持缓存） </summary>
-    public static string? RecogRect(Rectangle rect, bool useCache = true)
+    internal static string? RecogRect(Rectangle rect, bool useCache = true, Config.OcrOpt? opt = null)
     {
-        var blocks = GetText(rect, useCache);
+        var blocks = GetText(rect, useCache, opt);
         return blocks == null ? null : string.Join("", blocks.Select(t => t.Text?.Trim() ?? ""));
     }
 
     /// <summary> 识别图像，返回文本块列表（含坐标），每行独立 </summary>
-    public static List<TextBlock>? RecogImageBlocks(Bitmap image)
+    internal static List<TextBlock>? RecogImageBlocks(Bitmap image, Config.OcrOpt? opt = null)
     {
         if (image == null) return null;
-        using var engine = CreateEngine();
+        using var engine = CreateEngine(opt);
         try
         {
             using Mat mat = ImgMatch.BitmapToMatPooled(image);
@@ -318,11 +343,11 @@ public static class OcrHelper
     }
 
     /// <summary> 直接识别图像对象，返回拼接后的文字（不缓存） </summary>
-    public static string? RecogImage(Bitmap image)
+    internal static string? RecogImage(Bitmap image, Config.OcrOpt? opt = null)
     {
         if (image == null) return null;
 
-        using var engine = CreateEngine();
+        using var engine = CreateEngine(opt);
         Mat mat = ImgMatch.BitmapToMatPooled(image);
         try
         {

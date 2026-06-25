@@ -9,18 +9,21 @@ namespace ClickHelper;
 /// <summary> 配置数据 </summary>
 internal class Config
 {
-    [JsonProperty("跳过关于", Order = -10)] 
+    [JsonProperty("跳过关于", Order = -11)] 
     public bool SkipAbout { get; set; } = false;
+    [JsonProperty("显示瞄准", Order = -10)]
+    public bool ShowAim { get; set; } = true;
     [JsonProperty("点击间隔", Order = -9)] 
-    public int IntervalMs { get; set; } = 200;
+    public int IntervalMs { get; set; } = 500;
     [JsonProperty("循环次数", Order = -8)]
     public int PosLoopCount { get; set; } = -1;
     [JsonProperty("启动热键", Order = -7)]
-    public int ClickHotKey { get; set; } = (int)Keys.F9;
+    public string ClickHotKey { get; set; } = "F9";
     [JsonProperty("同时执行", Order = -6)]
     public bool SimulExec { get; set; } = false;
     [JsonProperty("记录热键", Order = -5)]
-    public int HotKeyAltL { get; set; } = (int)Keys.S;
+    public string RecordHotKey { get; set; } = "Alt+S";
+
 
     [JsonProperty("定时开关", Order = 5)] 
     public bool TimerEnabled { get; set; } = false;
@@ -36,15 +39,15 @@ internal class Config
     public int TimeType { get; set; } = 0;
     [JsonProperty("定时宏", Order = 11)] 
     public string MacroName { get; set; } = "";
-    [JsonProperty("定时热键", Order = 12)] 
-    public int TimerHotKey { get; set; } = (int)Keys.F8;
+    [JsonProperty("定时热键", Order = 12)]
+    public string TimerHotKey { get; set; } = "F8";
 
-    [JsonProperty("宏录制热键", Order = 20)] 
-    public int MacRecHotKey { get; set; } = (int)Keys.F6;
-    [JsonProperty("宏播放热键", Order = 21)] 
-    public int MacPlayHotKey { get; set; } = (int)Keys.F7;
-    [JsonProperty("截图热键", Order = 22)] 
-    public int SnapHotKey { get; set; } = (int)Keys.A;
+    [JsonProperty("宏录制热键", Order = 20)]
+    public string MacRecHotKey { get; set; } = "F6";
+    [JsonProperty("宏播放热键", Order = 21)]
+    public string MacPlayHotKey { get; set; } = "F7";
+    [JsonProperty("截图热键", Order = 22)]
+    public string SnapHotKey { get; set; } = "Alt+A";
 
     [JsonProperty("坐标管理表", Order = 23)] 
     public List<PosData> PosList { get; set; } = new();
@@ -68,12 +71,14 @@ internal class Config
         public int OpMode { get; set; } = 0;
         [JsonProperty("等待毫秒")] 
         public int WaitMs { get; set; } = 0;
+
         [JsonProperty("使用图像匹配")]
         public bool UseImage { get; set; } = false;
         [JsonProperty("图像模板")] 
         public byte[]? ImageTemp { get; set; }
         [JsonProperty("匹配阈值")] 
         public float Threshold { get; set; } = 0.6f;
+
         [JsonProperty("使用文字")] 
         public bool UseTxt { get; set; } = false;
         [JsonProperty("匹配文字")] 
@@ -82,6 +87,8 @@ internal class Config
         public int TxtMode { get; set; } = 0;
         [JsonProperty("文字阈值")] 
         public float TxtThresh { get; set; } = 0.8f;
+        [JsonProperty("识别文字选项")]
+        public OcrOpt OcrOptions { get; set; } = new OcrOpt();
 
         // ----- 重构 UIA 多窗口与属性 -----
         [JsonProperty("启用UIA")]
@@ -101,6 +108,30 @@ internal class Config
         [JsonProperty("组合键")] 
         public string ComboKeys { get; set; } = "Ctrl+C";
     }
+
+    #region 识别文字选项属性
+    public class OcrOpt
+    {
+        [JsonProperty("检测阈值")]
+        public float DetThr { get; set; } = 0.2f;
+        [JsonProperty("文本框阈值")]
+        public float BoxThr { get; set; } = 0.4f;
+        [JsonProperty("扩张比例")]
+        public float Unclip { get; set; } = 1.8f;
+        [JsonProperty("批大小")]
+        public int Batch { get; set; } = 6;
+        [JsonProperty("识别阈值")]
+        public float RecThr { get; set; } = 0.5f;
+        [JsonProperty("线程数")]
+        public int BatchPoolSize { get; set; } = 1;
+        [JsonProperty("缩放边长")]
+        public int LimitSideLen { get; set; } = 960;
+        [JsonProperty("得分模式")] // 0=FAST, 1=SLOW
+        public int ScoreMode { get; set; } = 0;
+        [JsonProperty("使用膨胀")]
+        public bool UseDilation { get; set; } = false;
+    }
+    #endregion
 
     public static readonly string Path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config.json");
     public static readonly string ScriptDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backup");

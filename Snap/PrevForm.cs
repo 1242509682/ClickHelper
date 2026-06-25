@@ -199,8 +199,17 @@ public class PrevForm : Form
             }
         }
 
+        // 弹出配置窗口
+        var opt = new Config.OcrOpt();
+        using (var dlg = new OcrOptForm(opt))
+        {
+            if (dlg.ShowDialog() != DialogResult.OK)
+                return;
+            opt = dlg.GetResult();
+        }
+
         // ★ 改用 RecogImageBlocks 获取带换行的结果
-        var blocks = OcrHelper.RecogImageBlocks(img);
+        var blocks = OcrHelper.RecogImageBlocks(img, opt);
         if (blocks == null || blocks.Count == 0)
         {
             MessageBox.Show("未识别到任何文字。", "OCR 结果", MessageBoxButtons.OK, MessageBoxIcon.Information);

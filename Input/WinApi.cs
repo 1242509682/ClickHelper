@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Forms;
 
 namespace ClickHelper;
 
-/// <summary> Windows API 封装 </summary>
 internal class WinApi
 {
     [DllImport("user32.dll")]
@@ -35,7 +35,7 @@ internal class WinApi
     public static extern bool RegisterHotKey(nint hWnd, int id, uint fsModifiers, uint vk);
 
     [DllImport("user32.dll")]
-    public static extern bool RegisterHotKey(nint hWnd, int id);
+    public static extern bool UnregisterHotKey(nint hWnd, int id);
 
     [DllImport("user32.dll")]
     public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
@@ -62,7 +62,6 @@ internal class WinApi
     [StructLayout(LayoutKind.Sequential)]
     public struct RECT { public int Left, Top, Right, Bottom; }
 
-    // ---- 窗口消息常量（鼠标/键盘） ----
     public const uint WM_LBUTTONDOWN = 0x0201;
     public const uint WM_LBUTTONUP = 0x0202;
     public const uint WM_RBUTTONDOWN = 0x0204;
@@ -74,16 +73,12 @@ internal class WinApi
     public const uint WM_KEYDOWN = 0x0100;
     public const uint WM_KEYUP = 0x0101;
 
-    // ---- 热键 ID ----
-    public const int HOTKEY_F9 = 1;
-    public const int HOTKEY_ALT_S = 2;
     public const uint MOD_ALT = 0x0001;
     public const uint MOD_CONTROL = 0x0002;
     public const uint MOD_SHIFT = 0x0004;
     public const uint MOD_WIN = 0x0008;
     public const uint MOD_NOREPEAT = 0x4000;
 
-    // ---- 鼠标事件标志 ----
     private const uint MOUSEEVENTF_LEFTDOWN = 0x02;
     private const uint MOUSEEVENTF_LEFTUP = 0x04;
     private const uint MOUSEEVENTF_RIGHTDOWN = 0x08;
@@ -92,7 +87,6 @@ internal class WinApi
     private const uint MOUSEEVENTF_MIDDLEUP = 0x40;
     private const uint MOUSEEVENTF_WHEEL = 0x0800;
 
-    // ---- 鼠标模拟（供全局使用） ----
     public static void LeftDown() => mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
     public static void LeftUp() => mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
     public static void RightDown() => mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
@@ -100,20 +94,10 @@ internal class WinApi
     public static void MiddleDown() => mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0);
     public static void MiddleUp() => mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0);
     public static void Wheel(int delta) => mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)delta, 0);
-
     public static void LeftClick() { LeftDown(); LeftUp(); }
     public static void RightClick() { RightDown(); RightUp(); }
     public static void MiddleClick() { MiddleDown(); MiddleUp(); }
 
-    // ---- 键盘模拟（KeyDown/KeyUp 已存在，但增加重载以兼容 Keys） ----
-    private const uint KEYEVENTF_KEYDOWN = 0x0000;
-    private const uint KEYEVENTF_KEYUP = 0x0002;
-
-    public static void KeyDown(Keys key) => keybd_event((byte)key, 0, KEYEVENTF_KEYDOWN, nuint.Zero);
-    public static void KeyUp(Keys key) => keybd_event((byte)key, 0, KEYEVENTF_KEYUP, nuint.Zero);
-    public static void KeyPress(Keys key) { KeyDown(key); KeyUp(key); }
-
-    // ---- 钩子相关 ----
     public const int WH_MOUSE_LL = 14;
     public const int WH_KEYBOARD_LL = 13;
 
@@ -151,64 +135,93 @@ internal class WinApi
         public nint dwExtraInfo;
     }
 
-    // ---- 窗口枚举与信息 ----
     public delegate bool EnumWinProc(nint hWnd, nint lParam);
-
     [DllImport("user32.dll")]
     public static extern bool EnumWindows(EnumWinProc lpEnumFunc, nint lParam);
-
     [DllImport("user32.dll")]
     public static extern bool IsWindowVisible(nint hWnd);
-
     [DllImport("user32.dll")]
-    public static extern int GetWindowText(nint hWnd, System.Text.StringBuilder text, int count);
-
+    public static extern int GetWindowText(nint hWnd, StringBuilder text, int count);
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(nint hWnd, out uint procId);
 
-    // ---- 坐标转换 ----
     [DllImport("user32.dll")]
     public static extern bool ScreenToClient(nint hWnd, ref POINT pt);
 
-    // ---- 工具方法：生成常用的热键列表（供下拉框使用） ----
-    public static object[] GetCommonKeys()
+    // ---- 热键解析与格式化（新增） ----
+    public static (uint modifiers, Keys key) ParseHotKey(string str)
     {
-        return 
-        [
-            Keys.F1, Keys.F2, Keys.F3, Keys.F4, Keys.F5, Keys.F6, Keys.F7, Keys.F8,
-            Keys.F9, Keys.F10, Keys.F11, Keys.F12,
-            Keys.D0, Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9,
-            Keys.A, Keys.B, Keys.C, Keys.D, Keys.E, Keys.F, Keys.G, Keys.H, Keys.I, Keys.J,
-            Keys.K, Keys.L, Keys.M, Keys.N, Keys.O, Keys.P, Keys.Q, Keys.R, Keys.S, Keys.T,
-            Keys.U, Keys.V, Keys.W, Keys.X, Keys.Y, Keys.Z
-        ];
+        uint mods = 0;
+        Keys key = Keys.None;
+        if (string.IsNullOrWhiteSpace(str)) return (mods, key);
+
+        var parts = str.Split('+', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var p in parts)
+        {
+            string trimmed = p.Trim();
+            if (trimmed.Equals("Ctrl", StringComparison.OrdinalIgnoreCase))
+                mods |= MOD_CONTROL;
+            else if (trimmed.Equals("Shift", StringComparison.OrdinalIgnoreCase))
+                mods |= MOD_SHIFT;
+            else if (trimmed.Equals("Alt", StringComparison.OrdinalIgnoreCase))
+                mods |= MOD_ALT;
+            else if (trimmed.Equals("Win", StringComparison.OrdinalIgnoreCase))
+                mods |= MOD_WIN;
+            else if (Enum.TryParse<Keys>(trimmed, true, out var k))
+                key = k;
+        }
+        return (mods, key);
     }
 
-    public static nint MakeLParam(int x, int y) => y << 16 | x & 0xFFFF;
+    public static string FormatHotKey(uint modifiers, Keys key)
+    {
+        var parts = new List<string>();
+        if ((modifiers & MOD_CONTROL) != 0) parts.Add("Ctrl");
+        if ((modifiers & MOD_SHIFT) != 0) parts.Add("Shift");
+        if ((modifiers & MOD_ALT) != 0) parts.Add("Alt");
+        if ((modifiers & MOD_WIN) != 0) parts.Add("Win");
+        if (key != Keys.None) parts.Add(key.ToString());
+        return string.Join("+", parts);
+    }
 
     /// <summary>
-    /// 根据进程名或窗口标题列表获取窗口句柄
+    /// 将组合键字符串解析为 Keys 列表（用于执行组合键）
+    /// 例如 "Ctrl+C" -> [ControlKey, C]
     /// </summary>
+    public static List<Keys> ParseHotKeyToKeys(string str)
+    {
+        var result = new List<Keys>();
+        if (string.IsNullOrWhiteSpace(str)) return result;
+
+        var (modifiers, key) = ParseHotKey(str);
+        if (key == Keys.None) return result;
+
+        // 按顺序添加修饰键（Ctrl、Shift、Alt）
+        if ((modifiers & MOD_CONTROL) != 0) result.Add(Keys.ControlKey);
+        if ((modifiers & MOD_SHIFT) != 0) result.Add(Keys.ShiftKey);
+        if ((modifiers & MOD_ALT) != 0) result.Add(Keys.Menu);
+        // 主键放在最后
+        result.Add(key);
+        return result;
+    }
+
+    public static nint MakeLParam(int x, int y) => (nint)((y << 16) | (x & 0xFFFF));
+
     public static List<nint> GetHandles(IEnumerable<string> ids)
     {
         var set = new HashSet<nint>();
         foreach (var id in ids)
         {
             if (string.IsNullOrEmpty(id)) continue;
-            // 按进程名查找
             foreach (var p in Process.GetProcessesByName(id))
                 if (p.MainWindowHandle != nint.Zero)
                     set.Add(p.MainWindowHandle);
-            // 按窗口标题查找
             var hwnd = FindWindow(null, id);
             if (hwnd != nint.Zero) set.Add(hwnd);
         }
         return set.ToList();
     }
 
-    /// <summary>
-    /// 向指定窗口发送鼠标点击消息（后台，不移动光标）
-    /// </summary>
     public static void SendClick(nint hwnd, int sx, int sy, int btn, int mode)
     {
         var pt = new POINT { X = sx, Y = sy };
@@ -221,7 +234,7 @@ internal class WinApi
             case 2: down = WM_RBUTTONDOWN; up = WM_RBUTTONUP; break;
             default: return;
         }
-        nint lParam = pt.Y << 16 | pt.X & 0xFFFF;
+        nint lParam = (nint)((pt.Y << 16) | (pt.X & 0xFFFF));
         if (mode == 0 || mode == 1) PostMessage(hwnd, down, nint.Zero, lParam);
         if (mode == 0 || mode == 2) PostMessage(hwnd, up, nint.Zero, lParam);
     }

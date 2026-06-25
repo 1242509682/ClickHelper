@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using static ClickHelper.Config;
 using static ClickHelper.Program;
 
 namespace ClickHelper;
@@ -358,6 +359,7 @@ public partial class PosForm : Form
             pos.ClassN = dlg.NewClassN;
             pos.TextContent = dlg.NewTxtVal;
             pos.ComboKeys = dlg.NewCombo;
+            pos.OcrOptions = dlg.NewOcrOpt ?? new OcrOpt();
             cfg.Save();
             LoadList();
         }
@@ -389,6 +391,7 @@ public partial class PosForm : Form
             TxtMatch = src.TxtMatch,
             TxtMode = src.TxtMode,
             TxtThresh = src.TxtThresh,
+            OcrOptions = src.OcrOptions,
             Targets = src.Targets,
             UseUIA = src.UseUIA,
             AutoId = src.AutoId,

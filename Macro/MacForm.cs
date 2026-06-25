@@ -9,11 +9,15 @@ namespace ClickHelper;
 
 public class MacForm : Form
 {
-    // UI 控件
+    // ---- 热键ID（引用 Main 中的常量） ----
+    private const int HOTKEY_MAC_REC = 200;
+    private const int HOTKEY_MAC_PLAY = 201;
+
+    // ---- UI 控件 ----
     private ListBox lstFiles;
     private ListBox lstItems;
     private Button btnPlay, btnStopPlay, btnRec, btnStopRec, btnConv, btnEdit, btnDel, btnClear;
-    private ComboBox cboRecHot, cboPlayHot;
+    private HotKeyBox hkRec, hkPlay;  // 替代 ComboBox
     private Label lblStatus;
     private ToolTip tip = new ToolTip();
     private Action changed;
@@ -36,10 +40,9 @@ public class MacForm : Form
         MaximizeBox = false;
         MinimizeBox = false;
         KeyPreview = true;
-        BackColor = Color.FromArgb(240, 244, 248);  // 统一背景
+        BackColor = Color.FromArgb(240, 244, 248);
         KeyDown += MacForm_KeyDown;
 
-        // ---- 主布局 ----
         var mainLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -52,7 +55,7 @@ public class MacForm : Form
         mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-        // ---- 左侧面板（两行列表） ----
+        // 左侧面板
         var leftPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -65,81 +68,34 @@ public class MacForm : Form
         leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 30));
         leftPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 70));
 
-        // 顶部操作按钮（新建/保存/加载/删除/清空列表）
         var top = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        var btnNew = new Button
-        {
-            Text = "新建",
-            AutoSize = true,
-            FlatStyle = FlatStyle.Flat,
-            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(0, 180, 255) },
-            BackColor = Color.FromArgb(225, 240, 255),
-            ForeColor = Color.FromArgb(0, 80, 180),
-            Font = new Font("微软雅黑", 9F)
-        };
+        var btnNew = new Button { Text = "新建", AutoSize = true, FlatStyle = FlatStyle.Flat, FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(0, 180, 255) }, BackColor = Color.FromArgb(225, 240, 255), ForeColor = Color.FromArgb(0, 80, 180), Font = new Font("微软雅黑", 9F) };
         btnNew.Click += (s, e) => NewMac();
         tip.SetToolTip(btnNew, "创建新宏文件");
         top.Controls.Add(btnNew);
 
-        var btnLoad = new Button
-        {
-            Text = "加载",
-            AutoSize = true,
-            FlatStyle = FlatStyle.Flat,
-            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 200, 200) },
-            BackColor = Color.FromArgb(225, 245, 245),
-            ForeColor = Color.FromArgb(0, 100, 120),
-            Font = new Font("微软雅黑", 9F)
-        };
+        var btnLoad = new Button { Text = "加载", AutoSize = true, FlatStyle = FlatStyle.Flat, FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 200, 200) }, BackColor = Color.FromArgb(225, 245, 245), ForeColor = Color.FromArgb(0, 100, 120), Font = new Font("微软雅黑", 9F) };
         btnLoad.Click += (s, e) => LoadMac();
         tip.SetToolTip(btnLoad, "从外部加载宏文件");
         top.Controls.Add(btnLoad);
 
-        var btnSave = new Button
-        {
-            Text = "保存",
-            AutoSize = true,
-            FlatStyle = FlatStyle.Flat,
-            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 200, 100) },
-            BackColor = Color.FromArgb(230, 245, 230),
-            ForeColor = Color.FromArgb(0, 120, 0),
-            Font = new Font("微软雅黑", 9F)
-        };
+        var btnSave = new Button { Text = "保存", AutoSize = true, FlatStyle = FlatStyle.Flat, FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(100, 200, 100) }, BackColor = Color.FromArgb(230, 245, 230), ForeColor = Color.FromArgb(0, 120, 0), Font = new Font("微软雅黑", 9F) };
         btnSave.Click += (s, e) => SaveMac();
         tip.SetToolTip(btnSave, "保存当前宏");
         top.Controls.Add(btnSave);
 
-        var btnDelMac = new Button
-        {
-            Text = "删除",
-            AutoSize = true,
-            FlatStyle = FlatStyle.Flat,
-            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(255, 150, 100) },
-            BackColor = Color.FromArgb(255, 235, 225),
-            ForeColor = Color.FromArgb(180, 60, 0),
-            Font = new Font("微软雅黑", 9F)
-        };
+        var btnDelMac = new Button { Text = "删除", AutoSize = true, FlatStyle = FlatStyle.Flat, FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(255, 150, 100) }, BackColor = Color.FromArgb(255, 235, 225), ForeColor = Color.FromArgb(180, 60, 0), Font = new Font("微软雅黑", 9F) };
         btnDelMac.Click += (s, e) => DelMac();
         tip.SetToolTip(btnDelMac, "删除选中的宏文件");
         top.Controls.Add(btnDelMac);
 
-        var btnClrAll = new Button
-        {
-            Text = "清空列表",
-            AutoSize = true,
-            FlatStyle = FlatStyle.Flat,
-            FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(180, 180, 180) },
-            BackColor = Color.FromArgb(240, 240, 240),
-            ForeColor = Color.FromArgb(80, 80, 80),
-            Font = new Font("微软雅黑", 9F)
-        };
+        var btnClrAll = new Button { Text = "清空列表", AutoSize = true, FlatStyle = FlatStyle.Flat, FlatAppearance = { BorderSize = 1, BorderColor = Color.FromArgb(180, 180, 180) }, BackColor = Color.FromArgb(240, 240, 240), ForeColor = Color.FromArgb(80, 80, 80), Font = new Font("微软雅黑", 9F) };
         btnClrAll.Click += (s, e) => ClearAll();
         tip.SetToolTip(btnClrAll, "删除所有宏文件");
         top.Controls.Add(btnClrAll);
 
         leftPanel.Controls.Add(top, 0, 0);
 
-        // 宏文件列表（上半）
         lstFiles = new ListBox
         {
             Dock = DockStyle.Fill,
@@ -151,7 +107,6 @@ public class MacForm : Form
         lstFiles.SelectedIndexChanged += (s, e) => LoadItems();
         leftPanel.Controls.Add(lstFiles, 0, 1);
 
-        // 宏指令列表（下半）
         lstItems = new ListBox
         {
             Dock = DockStyle.Fill,
@@ -169,7 +124,7 @@ public class MacForm : Form
 
         mainLayout.Controls.Add(leftPanel, 0, 0);
 
-        // ---- 右侧面板 ----
+        // 右侧面板
         var rightPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -183,7 +138,7 @@ public class MacForm : Form
         rightPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         rightPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-        // ---- 行0：状态标签 ----
+        // 行0：状态
         lblStatus = new Label
         {
             Text = "就绪",
@@ -195,7 +150,7 @@ public class MacForm : Form
         rightPanel.Controls.Add(lblStatus, 0, 0);
         rightPanel.SetColumnSpan(lblStatus, 2);
 
-        // ---- 行1：录制 / 停录 ----
+        // 行1：录制/停录
         btnRec = MakeButton("录制", Color.FromArgb(0, 180, 255), Color.FromArgb(225, 240, 255), Color.FromArgb(0, 80, 180));
         btnStopRec = MakeButton("停录", Color.FromArgb(255, 100, 100), Color.FromArgb(255, 230, 230), Color.FromArgb(180, 0, 0));
         btnStopRec.Enabled = false;
@@ -208,7 +163,7 @@ public class MacForm : Form
         rightPanel.Controls.Add(flow1, 0, 1);
         rightPanel.SetColumnSpan(flow1, 2);
 
-        // ---- 行2：播放 / 停播 ----
+        // 行2：播放/停播
         btnPlay = MakeButton("播放", Color.FromArgb(255, 180, 0), Color.FromArgb(255, 245, 225), Color.FromArgb(180, 100, 0));
         btnStopPlay = MakeButton("停播", Color.FromArgb(255, 150, 100), Color.FromArgb(255, 235, 225), Color.FromArgb(180, 60, 0));
         btnStopPlay.Enabled = false;
@@ -221,7 +176,7 @@ public class MacForm : Form
         rightPanel.Controls.Add(flow2, 0, 2);
         rightPanel.SetColumnSpan(flow2, 2);
 
-        // ---- 行3：转换 / 编辑 ----
+        // 行3：转换/编辑
         btnConv = MakeButton("转换", Color.FromArgb(200, 150, 255), Color.FromArgb(240, 230, 255), Color.FromArgb(100, 50, 160));
         btnEdit = MakeButton("编辑", Color.FromArgb(100, 200, 200), Color.FromArgb(225, 245, 245), Color.FromArgb(0, 100, 120));
         tip.SetToolTip(btnConv, "将宏转换为坐标管理表");
@@ -233,7 +188,7 @@ public class MacForm : Form
         rightPanel.Controls.Add(flow3, 0, 3);
         rightPanel.SetColumnSpan(flow3, 2);
 
-        // ---- 行4：删除 / 清空 ----
+        // 行4：删除/清空
         btnDel = MakeButton("删行", Color.FromArgb(180, 180, 180), Color.FromArgb(240, 240, 240), Color.FromArgb(80, 80, 80));
         btnClear = MakeButton("清空", Color.FromArgb(180, 180, 180), Color.FromArgb(240, 240, 240), Color.FromArgb(80, 80, 80));
         tip.SetToolTip(btnDel, "删除选中的宏指令");
@@ -245,7 +200,7 @@ public class MacForm : Form
         rightPanel.Controls.Add(flow4, 0, 4);
         rightPanel.SetColumnSpan(flow4, 2);
 
-        // ---- 行5：热键设置标题 ----
+        // 行5：热键标题
         var lblHot = new Label
         {
             Text = "热键设置:",
@@ -257,7 +212,7 @@ public class MacForm : Form
         rightPanel.Controls.Add(lblHot, 0, 5);
         rightPanel.SetColumnSpan(lblHot, 2);
 
-        // ---- 行6：录制切换标签 + 下拉 ----
+        // 行6：录制热键
         rightPanel.Controls.Add(new Label
         {
             Text = "录制:",
@@ -266,19 +221,16 @@ public class MacForm : Form
             ForeColor = Color.FromArgb(40, 60, 90),
             Font = new Font("微软雅黑", 9F)
         }, 0, 6);
-        cboRecHot = new ComboBox
+        hkRec = new HotKeyBox { HotKey = cfg.MacRecHotKey };
+        hkRec.HotKeyChanged += (s, val) =>
         {
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 80,
-            Anchor = AnchorStyles.Left,
-            BackColor = Color.White,
-            ForeColor = Color.FromArgb(30, 60, 90),
-            Font = new Font("微软雅黑", 9F)
+            cfg.MacRecHotKey = val;
+            cfg.Save();
+            HotKeyManager.Update(HOTKEY_MAC_REC, val);
         };
-        rightPanel.Controls.Add(cboRecHot, 1, 6);
-        cboRecHot.Anchor = AnchorStyles.Left;
+        rightPanel.Controls.Add(hkRec, 1, 6);
 
-        // ---- 行7：播放切换标签 + 下拉 ----
+        // 行7：播放热键
         rightPanel.Controls.Add(new Label
         {
             Text = "播放:",
@@ -287,23 +239,19 @@ public class MacForm : Form
             ForeColor = Color.FromArgb(40, 60, 90),
             Font = new Font("微软雅黑", 9F)
         }, 0, 7);
-        cboPlayHot = new ComboBox
+        hkPlay = new HotKeyBox { HotKey = cfg.MacPlayHotKey };
+        hkPlay.HotKeyChanged += (s, val) =>
         {
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 80,
-            Anchor = AnchorStyles.Left,
-            BackColor = Color.White,
-            ForeColor = Color.FromArgb(30, 60, 90),
-            Font = new Font("微软雅黑", 9F)
+            cfg.MacPlayHotKey = val;
+            cfg.Save();
+            HotKeyManager.Update(HOTKEY_MAC_PLAY, val);
         };
-        rightPanel.Controls.Add(cboPlayHot, 1, 7);
-        cboPlayHot.Anchor = AnchorStyles.Left;
+        rightPanel.Controls.Add(hkPlay, 1, 7);
 
         mainLayout.Controls.Add(rightPanel, 1, 0);
-
         Controls.Add(mainLayout);
 
-        // ---- 事件绑定（保持不变） ----
+        // ---- 事件绑定 ----
         btnRec.Click += (s, e) => { mainForm.ToglRecord(); UpdateButtons(); };
         btnStopRec.Click += (s, e) => { mainForm.ToglRecord(); UpdateButtons(); };
         btnPlay.Click += (s, e) => { mainForm.SwitchPlay(); UpdateButtons(); };
@@ -313,22 +261,8 @@ public class MacForm : Form
         btnDel.Click += (s, e) => DelItem();
         btnClear.Click += (s, e) => ClearMac();
 
-        cboRecHot.SelectedIndexChanged += OnRecHotChanged;
-        cboPlayHot.SelectedIndexChanged += OnPlayHotChanged;
-
-        // 初始化热键下拉
-        var keys = WinApi.GetCommonKeys();
-        cboRecHot.Items.AddRange(keys);
-        cboPlayHot.Items.AddRange(keys);
-        LoadHotFromCfg();
-
-        // 初始化文件列表
         RefreshFiles();
-
-        // 设置文件监视器
         SetupWatcher();
-
-        // 订阅主窗口状态变化
         mainForm.StatusChanged += OnMainStatusChanged;
         UpdateButtons();
         FormClosing += (s, e) =>
@@ -338,7 +272,7 @@ public class MacForm : Form
         };
     }
 
-    // ---- 辅助方法：创建统一风格的按钮 ----
+    // ---- 辅助方法 ----
     private Button MakeButton(string text, Color border, Color back, Color fore)
     {
         return new Button
@@ -366,7 +300,7 @@ public class MacForm : Form
         panel.Padding = new Padding(pad, 0, pad, 0);
     }
 
-    // ---- 文件系统监视 ----
+    // ---- 文件监视 ----
     private void SetupWatcher()
     {
         string dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Macros");
@@ -450,7 +384,6 @@ public class MacForm : Form
             e.Handled = true;
             return;
         }
-
         if (lstFiles.Focused)
         {
             if (e.KeyCode == Keys.Delete)
@@ -460,7 +393,6 @@ public class MacForm : Form
             }
             return;
         }
-
         if (lstItems.Focused)
         {
             if (e.KeyCode == Keys.Delete)
@@ -481,10 +413,8 @@ public class MacForm : Form
         if (curMacro == null) return;
         int idx = lstItems.SelectedIndex;
         if (idx < 0) return;
-
         var data = MacIO.Load(curMacro);
         if (data == null || idx >= data.Items.Count) return;
-
         var src = data.Items[idx];
         var copy = new MacItem
         {
@@ -495,55 +425,15 @@ public class MacForm : Form
             Delta = src.Delta,
             Time = src.Time
         };
-
         int insertIdx = idx + 1;
         data.Items.Insert(insertIdx, copy);
         MacIO.Save(data);
-
         LoadItems();
         lstItems.SelectedIndex = insertIdx;
         changed?.Invoke();
     }
 
-    // ---- 热键下拉 ----
-    private void LoadHotFromCfg()
-    {
-        cboRecHot.SelectedIndexChanged -= OnRecHotChanged;
-        cboPlayHot.SelectedIndexChanged -= OnPlayHotChanged;
-
-        if (cboRecHot.Items.Contains((Keys)cfg.MacRecHotKey))
-            cboRecHot.SelectedItem = (Keys)cfg.MacRecHotKey;
-        else if (cboRecHot.Items.Count > 0)
-            cboRecHot.SelectedIndex = 0;
-
-        if (cboPlayHot.Items.Contains((Keys)cfg.MacPlayHotKey))
-            cboPlayHot.SelectedItem = (Keys)cfg.MacPlayHotKey;
-        else if (cboPlayHot.Items.Count > 0)
-            cboPlayHot.SelectedIndex = 0;
-
-        cboRecHot.SelectedIndexChanged += OnRecHotChanged;
-        cboPlayHot.SelectedIndexChanged += OnPlayHotChanged;
-    }
-
-    private void OnRecHotChanged(object? sender, EventArgs e)
-    {
-        if (cboRecHot.SelectedItem == null || cboPlayHot.SelectedItem == null)
-            return;
-        int newRec = (int)(Keys)cboRecHot.SelectedItem;
-        int newPlay = (int)(Keys)cboPlayHot.SelectedItem;
-        mainForm.UpMacKeys(newRec, newPlay);
-    }
-
-    private void OnPlayHotChanged(object? sender, EventArgs e)
-    {
-        if (cboRecHot.SelectedItem == null || cboPlayHot.SelectedItem == null)
-            return;
-        int newRec = (int)(Keys)cboRecHot.SelectedItem;
-        int newPlay = (int)(Keys)cboPlayHot.SelectedItem;
-        mainForm.UpMacKeys(newRec, newPlay);
-    }
-
-    // ---- 主窗口状态变化 ----
+    // ---- 主窗口状态 ----
     private void OnMainStatusChanged(string status)
     {
         if (IsDisposed) return;
@@ -569,7 +459,7 @@ public class MacForm : Form
         btnStopPlay.Enabled = isPlay;
     }
 
-    // ---- 加载宏指令列表 ----
+    // ---- 加载宏指令 ----
     private void LoadItems()
     {
         if (lstFiles.SelectedItem == null)
@@ -665,7 +555,6 @@ public class MacForm : Form
         var data = MacIO.Load(curMacro);
         if (data == null) return;
         if (idx >= data.Items.Count) return;
-
         var item = data.Items[idx];
         using var dlg = new MacEdit(item);
         if (dlg.ShowDialog() == DialogResult.OK)

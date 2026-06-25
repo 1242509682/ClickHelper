@@ -7,19 +7,18 @@ namespace ClickHelper;
 
 public class TimerForm : Form
 {
-    #region 字段
+    private const int HOTKEY_TIMER = 203;
+
     private RadioButton rbDate, rbTimer;
     private DateTimePicker dtpStart, dtpEnd;
     private CheckBox chkNoEnd;
     private NumericUpDown numHour, numMin, numSec;
     private RadioButton rbPos, rbMacro;
-    private ComboBox cboMacros, cboTimHot;
+    private ComboBox cboMacros;
+    private HotKeyBox hkTimer;  // 替代 ComboBox
 
-    // 面板引用（用于可见性控制）
     private FlowLayoutPanel panDate, panTimer;
-    #endregion
 
-    #region 构造与初始化
     internal TimerForm()
     {
         InitForm();
@@ -40,9 +39,7 @@ public class TimerForm : Form
         BackColor = Color.FromArgb(240, 244, 248);
         KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) Close(); };
     }
-    #endregion
 
-    #region UI 布局
     private void InitLayout()
     {
         var lay = new TableLayoutPanel
@@ -80,20 +77,14 @@ public class TimerForm : Form
         };
         lay.Controls.Add(lblHot, 0, row);
 
-        var flowHot = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
-        cboTimHot = new ComboBox
+        hkTimer = new HotKeyBox { HotKey = cfg.TimerHotKey };
+        hkTimer.HotKeyChanged += (s, val) =>
         {
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 100,
-            Font = font,
-            BackColor = Color.White,
-            ForeColor = Color.FromArgb(30, 60, 90)
+            cfg.TimerHotKey = val;
+            cfg.Save();
+            HotKeyManager.Update(HOTKEY_TIMER, val);
         };
-        var keys = WinApi.GetCommonKeys();
-        cboTimHot.Items.AddRange(keys);
-        cboTimHot.SelectedItem = cboTimHot.Items.Contains((Keys)cfg.TimerHotKey) ? (Keys)cfg.TimerHotKey : Keys.F8;
-        flowHot.Controls.Add(cboTimHot);
-        lay.Controls.Add(flowHot, 1, row);
+        lay.Controls.Add(hkTimer, 1, row);
         row++;
     }
 
@@ -148,7 +139,6 @@ public class TimerForm : Form
         panDate = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true };
         panTimer = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
 
-        // 日期面板
         var panStart = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
         dtpStart = new DateTimePicker
         {
@@ -199,7 +189,6 @@ public class TimerForm : Form
         panEnd.Controls.Add(chkNoEnd);
         panDate.Controls.Add(panEnd);
 
-        // 计时面板
         numHour = new NumericUpDown
         {
             Minimum = 0,
@@ -237,7 +226,6 @@ public class TimerForm : Form
         panTimer.Controls.Add(numSec);
         panTimer.Controls.Add(new Label { Text = "秒", AutoSize = true, Font = font, ForeColor = Color.DimGray });
 
-        // 加入主容器
         panParam.Controls.Add(panDate);
         panParam.Controls.Add(panTimer);
         panDate.Visible = cfg.TimerMode == 0;
@@ -296,11 +284,8 @@ public class TimerForm : Form
         flowTarget.Controls.Add(rbMacro);
         flowTarget.Controls.Add(cboMacros);
         lay.Controls.Add(flowTarget, 1, row);
-        // row++ 不需要，因为这是最后一行
     }
-    #endregion
 
-    #region 事件绑定
     private void InitEvents()
     {
         rbDate.CheckedChanged += (s, e) =>
@@ -329,7 +314,6 @@ public class TimerForm : Form
         };
         dtpEnd.Enabled = !chkNoEnd.Checked;
 
-        cboTimHot.SelectedIndexChanged += (s, e) => SaveConfig();
         dtpStart.ValueChanged += (s, e) => SaveConfig();
         dtpEnd.ValueChanged += (s, e) => SaveConfig();
         numHour.ValueChanged += (s, e) => SaveConfig();
@@ -337,9 +321,7 @@ public class TimerForm : Form
         numSec.ValueChanged += (s, e) => SaveConfig();
         cboMacros.SelectedIndexChanged += (s, e) => SaveConfig();
     }
-    #endregion
 
-    #region 配置保存 & UI更新
     private void SaveConfig()
     {
         cfg.TimerMode = rbDate.Checked ? 0 : 1;
@@ -348,15 +330,13 @@ public class TimerForm : Form
         cfg.TimerDuration = (int)(numHour.Value * 3600 + numMin.Value * 60 + numSec.Value);
         cfg.TimeType = rbPos.Checked ? 0 : 1;
         cfg.MacroName = cboMacros.SelectedItem?.ToString() ?? "";
-        if (cboTimHot.SelectedItem is Keys key)
-            cfg.TimerHotKey = (int)key;
         cfg.Save();
     }
 
     private void UpdateUI()
     {
         bool enabled = cfg.TimerEnabled;
-        cboTimHot.Enabled = !enabled;
+        hkTimer.Enabled = !enabled;
         rbDate.Enabled = !enabled;
         rbTimer.Enabled = !enabled;
         dtpStart.Enabled = !enabled;
@@ -368,6 +348,6 @@ public class TimerForm : Form
         rbPos.Enabled = !enabled;
         rbMacro.Enabled = !enabled;
         cboMacros.Enabled = !enabled;
+        hkTimer.HotKey = cfg.TimerHotKey;
     }
-    #endregion
 }

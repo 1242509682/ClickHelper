@@ -26,6 +26,11 @@ internal class Core
     private bool isBatchRunning = false;
     private static bool cvMissingShown = false;
 
+    // 进度条 当前已执行数, 总数
+    public event Action<int, int>? PrgChg;
+    // 点击前触发，参数为屏幕坐标
+    public event Action<int, int>? BefClick;
+
     public int CurIdx => idx;
     public bool Running => run;
     public event Action? Stopped;
@@ -91,10 +96,16 @@ internal class Core
                             if (cfg.PosLoopCount > 0 && loopIdx >= cfg.PosLoopCount)
                                 break;
                             var items = cfg.PosList.ToList();
+                            int total = items.Count;
+                            int curCount = 0; // 当前循环内已执行数
                             foreach (var pos in items)
                             {
                                 if (token.IsCancellationRequested) break;
                                 Exec(pos);
+                                curCount++;
+                                // 触发进度事件
+                                if (total > 0 && PrgChg != null)
+                                    PrgChg.Invoke(curCount, total);
                             }
                             loopIdx++;
                             if (cfg.IntervalMs > 0 && !token.IsCancellationRequested)
@@ -134,6 +145,8 @@ internal class Core
             tmr.Stop();
             run = false;
             idx = 0;
+            // ★ 触发停止事件
+            Stopped?.Invoke();
         }
     }
 
@@ -172,6 +185,7 @@ internal class Core
         {
             int total = cfg.PosList.Count;
             if (cfg.PosLoopCount > 0 && idx >= cfg.PosLoopCount * total) { Stop(); return; }
+            int curIdx = idx % total; // 当前要执行的索引
             var pos = cfg.PosList[idx % total];
             if (pos.WaitMs > 0)
             {
@@ -179,10 +193,16 @@ internal class Core
                 delay = true;
                 dTmr.Interval = pos.WaitMs;
                 dTmr.Start();
+                // 触发进度：当前执行的是 curIdx，但还未执行，所以已执行数为 curIdx
+                if (total > 0 && PrgChg != null)
+                    PrgChg.Invoke(curIdx, total);
                 return;
             }
             Exec(pos);
             idx++;
+            // 触发进度：已执行数量为 idx % total
+            if (total > 0 && PrgChg != null)
+                PrgChg.Invoke(idx % total, total);   // ← 修改此处
         }
     }
     #endregion
@@ -191,12 +211,18 @@ internal class Core
     private void Exec(Config.PosData pos)
     {
         // ---- 文字匹配 + 图像匹配 ----
-        if (pos.ImageTemp != null && pos.ImageTemp.Length > 0)
+        if (pos.UseImage && pos.ImageTemp != null && pos.ImageTemp.Length > 0)
         {
-            if (!pos.UseImage) return;
-
             var rect = ImgMatch.FindPoint(pos.ImageTemp, pos.Threshold);
-            if (!rect.HasValue) return;
+            if (!rect.HasValue)
+            {
+                // 图像匹配失败，回退到坐标（如果有有效坐标）
+                if (pos.X != 0 || pos.Y != 0)
+                    // 执行坐标点击（复用下面的 MClick 逻辑）
+                    MClick(pos.X, pos.Y, pos);
+                
+                return; // 跳过
+            }
 
             // 截图匹配成功后，若操作类型为文本输入，则走 UIA 输入路径
             if (pos.ActType == 2 && !string.IsNullOrEmpty(pos.TextContent))
@@ -220,7 +246,7 @@ internal class Core
 
                 int w = tempBmp.Width, h = tempBmp.Height;
                 var rect2 = new Rectangle(rect.Value.X - w / 2, rect.Value.Y - h / 2, w, h);
-                var blocks = OcrHelper.GetText(rect2);
+                var blocks = OcrHelper.GetText(rect2,true, pos.OcrOptions);
                 if (blocks != null)
                 {
                     foreach (var block in blocks)
@@ -237,12 +263,11 @@ internal class Core
                         }
                     }
                 }
+                return;
             }
-            else
-            {
-                // ---- 图像匹配 ----
-                MClick(rect.Value.X, rect.Value.Y, pos);
-            }
+
+            // ---- 图像匹配 ----
+            MClick(rect.Value.X, rect.Value.Y, pos);
             return;
         }
 
@@ -285,11 +310,7 @@ internal class Core
 
             case 3: // 组合键
                 if (!string.IsNullOrEmpty(pos.ComboKeys))
-                {
-                    var keys = FlaUIHelper.ParseKeys(pos.ComboKeys);
-                    if (keys.Count > 0)
-                        FlaUIHelper.TypeSimult(keys.ToArray());
-                }
+                    FlaUIHelper.TypeCombo(pos.ComboKeys);
                 break;
         }
     }
@@ -326,6 +347,9 @@ internal class Core
             }
             return;
         }
+
+        // ★ 触发瞄准事件
+        BefClick?.Invoke(x, y);
 
         Cursor.Position = new Point(x, y);
         int btn = pos.ActKey;
